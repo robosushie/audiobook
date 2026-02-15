@@ -1,0 +1,106 @@
+# =========================
+# Environment & secrets
+# =========================
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# =========================
+# Python
+# =========================
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+
+# =========================
+# Node / pnpm (all apps)
+# =========================
+node_modules/
+.pnpm-store/
+.npm
+.yarn-integrity
+*.tsbuildinfo
+
+# =========================
+# Next.js (admin)
+# =========================
+apps/admin/.next/
+apps/admin/out/
+
+# =========================
+# React Native / Expo (mobile)
+# =========================
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+
+# iOS
+apps/mobile/ios/Pods/
+apps/mobile/ios/build/
+*.xcworkspace
+!default.xcworkspace
+
+# Android
+apps/mobile/android/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# =========================
+# OS & editors
+# =========================
+.DS_Store
+.DS_Store?
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# =========================
+# Logs & debug
+# =========================
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Optional (uncomment if you use them)
+# =========================
+# .vercel
+# .turbo
