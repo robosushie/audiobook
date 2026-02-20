@@ -7,6 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "app": "pnpm --dir apps/mobile run",
+    "web": "pnpm --dir apps/web run dev"
   }
 }

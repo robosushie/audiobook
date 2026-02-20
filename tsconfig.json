@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "compilerOptions": {
+    "strict": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "references": [
+    { "path": "apps/mobile" },
+    { "path": "apps/web" }
+  ]
+}

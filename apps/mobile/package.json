@@ -10,7 +10,6 @@
     "clean": "rm -rf .expo node_modules"
   },
   "dependencies": {
-    "dotenv": "^16",
     "@clerk/clerk-expo": "^2.16.1",
     "@react-navigation/native": "^7.0.0",
     "@rn-primitives/accordion": "^1.2.0",
