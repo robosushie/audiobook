@@ -7,7 +7,8 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "app": "pnpm --dir apps/mobile run",
-    "web": "pnpm --dir apps/web run dev"
+    "app:mobile": "pnpm --dir apps/mobile run",
+    "app:web": "pnpm --dir apps/web run",
+    "service:main": "uvicorn app:app --reload --host 0.0.0.0 --port 8000"
   }
 }
