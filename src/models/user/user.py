@@ -4,14 +4,8 @@ from uuid import UUID, uuid4
 
 from pydantic import EmailStr
 from sqlmodel import Field, SQLModel
-
 from src.enums.auth import AuthProvider, ClerkRole
 from src.models.common import TimestampMixin, VerificationMixin
-
-
-# ---------------------------------------------------------------------------
-# Shared field definitions (base — not a table)
-# ---------------------------------------------------------------------------
 
 
 class UserBase(SQLModel):
@@ -56,11 +50,6 @@ class UserRead(UserBase):
     auth_provider: AuthProvider
     role: ClerkRole
     verified: bool
-
-
-# ---------------------------------------------------------------------------
-# DB table model
-# ---------------------------------------------------------------------------
 
 
 class User(TimestampMixin, VerificationMixin, UserBase, table=True):

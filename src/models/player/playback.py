@@ -3,8 +3,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime
-from sqlmodel import Field, SQLModel
+from sqlmodel import DateTime, Field, SQLModel
 
 
 class PlaybackBase(SQLModel):
@@ -13,7 +12,7 @@ class PlaybackBase(SQLModel):
     progress: float = Field(default=0.0, ge=0.0)
     last_played_at: datetime | None = Field(
         default=None,
-        sa_column_kwargs={"type_": DateTime(timezone=True)},
+        sa_type=DateTime(timezone=True),
     )
 
 

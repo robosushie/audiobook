@@ -122,7 +122,7 @@ apps/mobile/
 │   │   └── habit-option-card.tsx # Option card for listening habits step
 │   │
 │   ├── auth/                     # Auth-specific form components
-│   │   ├── sign-in-form.tsx      # (moved from components/)
+│   │   ├── sign-in-form.tsx
 │   │   ├── sign-up-form.tsx
 │   │   ├── forgot-password-form.tsx
 │   │   ├── reset-password-form.tsx
@@ -158,11 +158,11 @@ apps/mobile/
 │   │   ├── player-controls.tsx   # Play/Pause, Skip 15s, Previous chapter
 │   │   ├── player-progress.tsx   # Seekable progress slider
 │   │   ├── player-speed.tsx      # Playback speed selector (0.5×–3×)
-│   │   ├── player-sleep-timer.tsx# Sleep timer picker
+│   │   ├── player-sleep-timer.tsx # Sleep timer picker
 │   │   └── mini-player.tsx       # Collapsed mini player shown above tab bar
 │   │
 │   └── profile/                  # Profile & settings components
-│       ├── user-menu.tsx         # (moved from components/)
+│       ├── user-menu.tsx
 │       ├── stats-card.tsx        # Hours listened, books completed
 │       ├── settings-row.tsx      # Single settings list row
 │       └── avatar-picker.tsx     # Avatar / profile picture selector
@@ -170,7 +170,6 @@ apps/mobile/
 ├── constants/                    # App-wide static configuration
 │   ├── api.ts                    # API base URL, timeout, version prefix
 │   ├── theme.ts                  # Design token values (colours, spacing, radius)
-│   │                             #   — currently lives in lib/theme.ts, move here
 │   ├── routes.ts                 # Typed route name constants matching Expo Router paths
 │   ├── storage-keys.ts           # AsyncStorage / SecureStore key strings
 │   └── config.ts                 # Feature flags, pagination size, player defaults
@@ -237,7 +236,7 @@ apps/mobile/
 ### `app/` — Pages (Expo Router)
 
 | Folder / File | Purpose |
-|---|---|
+| --- | --- |
 | `_layout.tsx` | Root layout. Wraps the whole app with `ClerkProvider`, `ThemeProvider`, `PortalHost`. Guards routes by auth state. |
 | `(onboarding)/` | First-launch flow. Shown once after sign-up. Gatekept by `onboarding-store` completion flag. |
 | `(auth)/` | Unauthenticated-only screens. Protected by `Stack.Protected guard={!isSignedIn}`. |
@@ -252,7 +251,7 @@ apps/mobile/
 ### `api/` — API Client & Functions
 
 | File | Contents |
-|---|---|
+| --- | --- |
 | `client.ts` | Configured Axios instance. Sets `baseURL` from `constants/api.ts`, attaches Clerk JWT via request interceptor, handles 401 refresh. |
 | `auth.ts` | `loginWithEmail()`, `registerWithEmail()` — called by Clerk custom flows if needed. |
 | `audiobooks.ts` | `getAudiobooks()`, `getAudiobook(id)`, `searchAudiobooks(query)`, `getRecommended()` |
@@ -265,7 +264,7 @@ apps/mobile/
 ### `components/` — UI Components
 
 | Subfolder | What goes here |
-|---|---|
+| --- | --- |
 | `ui/` | Stateless design-system primitives (buttons, inputs, cards, etc.). These have **no business logic** and **no API calls**. |
 | `shared/` | Cross-feature layout helpers used by 3+ features (error boundaries, loading screens, empty states). |
 | `onboarding/` | Components only used inside the onboarding flow. |
@@ -284,7 +283,7 @@ apps/mobile/
 ### `constants/` — Static Configuration
 
 | File | Contents |
-|---|---|
+| --- | --- |
 | `api.ts` | `API_BASE_URL`, `API_TIMEOUT_MS`, `API_VERSION` |
 | `theme.ts` | Design tokens: colour palette, spacing scale, border radius, font sizes |
 | `routes.ts` | Typed constants for every Expo Router path (e.g. `ROUTES.PLAYER = '/player'`) |
@@ -300,7 +299,7 @@ apps/mobile/
 Use context **only** when state must be available to a deep component tree without prop drilling AND when Zustand is not appropriate (e.g. React lifecycle–dependent state).
 
 | File | Purpose |
-|---|---|
+| --- | --- |
 | `auth-context.tsx` | Re-exports Clerk's context with a typed helper hook (`useAuthContext`). Single source of truth for auth state. |
 | `theme-context.tsx` | Exposes `colorScheme` and `toggleColorScheme` from NativeWind everywhere in the tree. |
 | `player-context.tsx` | Holds a ref to the currently loaded player (Expo AV / Track Player instance) and mini-player visibility flag. Not suitable for Zustand because it wraps a non-serialisable native object. |
@@ -312,7 +311,7 @@ Use context **only** when state must be available to a deep component tree witho
 ### `hooks/` — Custom React Hooks
 
 | File | Purpose |
-|---|---|
+| --- | --- |
 | `use-auth.ts` | `useAuth()` — exposes `{ user, isSignedIn, signOut }` from Clerk context |
 | `use-theme.ts` | `useTheme()` — exposes `{ colorScheme, toggleColorScheme, colors }` |
 | `use-audiobook.ts` | `useAudiobook(id)` — fetches + caches audiobook detail |
@@ -328,7 +327,7 @@ Use context **only** when state must be available to a deep component tree witho
 ### `state/` — Zustand Stores
 
 | File | Store contents |
-|---|---|
+| --- | --- |
 | `player-store.ts` | `currentBookId`, `currentChapterId`, `position`, `speed`, `isPlaying`, `sleepTimerEnd`, `queue` |
 | `library-store.ts` | `items: LibraryItem[]`, `downloadStatuses: Record<string, DownloadStatus>`, `lastSynced` |
 | `onboarding-store.ts` | `isComplete`, `currentStep`, `selectedGenres`, `listeningHabit` — persisted via AsyncStorage |
@@ -342,7 +341,7 @@ Use context **only** when state must be available to a deep component tree witho
 ### `types/` — TypeScript Types
 
 | File | Types defined |
-|---|---|
+| --- | --- |
 | `api.ts` | Raw DTO shapes returned by the API before transformation |
 | `audiobook.ts` | `Audiobook`, `Chapter`, `Author`, `Narrator`, `Review` |
 | `user.ts` | `UserProfile`, `UserPreferences` |

@@ -20,7 +20,8 @@ dependencies = [
     "asyncpg (>=0.31.0,<0.32.0)",
     "ruff (>=0.15.2,<0.16.0)",
     "mypy (>=1.19.1,<2.0.0)",
-    "clerk-backend-api (>=5.0.2,<6.0.0)"
+    "clerk-backend-api (>=5.0.2,<6.0.0)",
+    "psycopg2-binary (>=2.9.11,<3.0.0)"
 ]
 
 

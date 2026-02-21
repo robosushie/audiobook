@@ -3,9 +3,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime
-from sqlmodel import Field, SQLModel
-
+from sqlmodel import DateTime, Field, SQLModel
 from src.enums.media import AudiobookStatus
 from src.models.common import TimestampMixin
 
@@ -63,7 +61,4 @@ class Audiobook(TimestampMixin, AudiobookBase, table=True):
     book_id: UUID = Field(foreign_key="books.id", index=True)
     voice_profile_id: UUID = Field(foreign_key="voice_profiles.id", index=True)
 
-    completed_at: datetime | None = Field(
-        default=None,
-        sa_column_kwargs={"type_": DateTime(timezone=True)},
-    )
+    completed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))

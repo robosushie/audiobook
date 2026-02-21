@@ -3,27 +3,18 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime
-from sqlmodel import Field, SQLModel
-
+from sqlmodel import DateTime, Field, SQLModel
 from src.enums.billing import PlanAudiobookLimit, SubscriptionPlan
 
 
 class UsageBase(SQLModel):
     """Fields shared by all usage schemas."""
 
-    period_start: datetime = Field(
-        sa_column_kwargs={"type_": DateTime(timezone=True)},
-    )
-    period_end: datetime = Field(
-        sa_column_kwargs={"type_": DateTime(timezone=True)},
-    )
+    period_start: datetime = Field(sa_type=DateTime(timezone=True))
+    period_end: datetime = Field(sa_type=DateTime(timezone=True))
     audiobooks_generated: int = Field(default=0, ge=0)
     audiobooks_limit: int
-    reset_at: datetime | None = Field(
-        default=None,
-        sa_column_kwargs={"type_": DateTime(timezone=True)},
-    )
+    reset_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
 
 
 class UsageCreate(UsageBase):

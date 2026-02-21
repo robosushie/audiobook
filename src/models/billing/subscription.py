@@ -3,10 +3,12 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime
-from sqlmodel import Field, SQLModel
-
-from src.enums.billing import PaymentProvider, SubscriptionPlan, SubscriptionStatus
+from sqlmodel import DateTime, Field, SQLModel
+from src.enums.billing import (
+    PaymentProvider,
+    SubscriptionPlan,
+    SubscriptionStatus,
+)
 from src.models.common import TimestampMixin
 
 
@@ -18,12 +20,8 @@ class SubscriptionBase(SQLModel):
     payment_provider: PaymentProvider
     plan: SubscriptionPlan = Field(default=SubscriptionPlan.FREE)
     status: SubscriptionStatus = Field(default=SubscriptionStatus.ACTIVE)
-    current_period_start: datetime = Field(
-        sa_column_kwargs={"type_": DateTime(timezone=True)},
-    )
-    current_period_end: datetime = Field(
-        sa_column_kwargs={"type_": DateTime(timezone=True)},
-    )
+    current_period_start: datetime = Field(sa_type=DateTime(timezone=True))
+    current_period_end: datetime = Field(sa_type=DateTime(timezone=True))
 
 
 class SubscriptionCreate(SubscriptionBase):

@@ -12,5 +12,6 @@ class UserName(BaseModel):
 
     @property
     def full(self) -> str:
+        """Return the full name."""
         parts = [self.first, self.middle, self.last]
         return " ".join(p for p in parts if p)

@@ -3,7 +3,6 @@
 from uuid import UUID, uuid4
 
 from sqlmodel import Field, SQLModel
-
 from src.enums.media import VoiceProfileStatus
 from src.models.common import TimestampMixin
 

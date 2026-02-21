@@ -7,8 +7,11 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "app:mobile": "pnpm --dir apps/mobile run",
-    "app:web": "pnpm --dir apps/web run",
-    "service:main": "uvicorn app:app --reload --host 0.0.0.0 --port 8000"
+    "db:create": "python scripts/run.py db:create",
+    "db:make": "python scripts/run.py db:make",
+    "db:upgrade": "python scripts/run.py db:upgrade",
+    "app:mobile": "python scripts/run.py app:mobile",
+    "app:web": "python scripts/run.py app:web",
+    "service:api": "python scripts/run.py service:api"
   }
 }

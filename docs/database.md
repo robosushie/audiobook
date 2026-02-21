@@ -3,7 +3,7 @@
 ## Stack
 
 | Layer | Tool | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | ORM / schema | SQLModel | Combines SQLAlchemy + Pydantic in one class definition |
 | Async driver | `asyncpg` | Used by FastAPI at runtime |
 | Sync driver | `psycopg2` | Used by Alembic for migrations only |
@@ -14,7 +14,7 @@
 
 ## Project layout
 
-```
+```text
 src/
 ├── alembic/
 │   ├── env.py              # Migration runner — reads all models, builds sync URL
@@ -79,7 +79,7 @@ DATABASE_NAME=
 
 Every model file follows this exact class order:
 
-```
+```text
 Base → Create → Update → Delete → Read (if needed) → table model (last)
 ```
 
@@ -128,15 +128,15 @@ If `Read` would be identical to `Base + id`, skip it and return `Base` directly 
 
 All `datetime` columns must use `TIMESTAMP WITH TIME ZONE` (`timestamptz`) in PostgreSQL. SQLModel's default `datetime` mapping produces `TIMESTAMP WITHOUT TIME ZONE`, which silently drops timezone info.
 
-Fix this by passing `sa_column_kwargs`:
+Fix this by using `sa_column` with an explicit `Column`:
 
 ```python
-from sqlalchemy import DateTime
+from sqlalchemy import Column, DateTime
 from sqlmodel import Field
 
 completed_at: datetime | None = Field(
     default=None,
-    sa_column_kwargs={"type_": DateTime(timezone=True)},
+    sa_column=Column(DateTime(timezone=True), nullable=True),
 )
 ```
 
@@ -165,7 +165,7 @@ Apply only to `User` (or any entity that goes through an email/phone verificatio
 Defined in `src/models/base.py` and applied globally via `SQLModel.metadata`:
 
 | Constraint | Pattern |
-|---|---|
+| --- | --- |
 | Index | `ix_<column>` |
 | Unique | `uq_<table>_<column>` |
 | Check | `ck_<table>_<column>` |
@@ -205,7 +205,7 @@ class PlanAudiobookLimit(IntEnum):
 ### Enum files
 
 | File | Enums |
-|---|---|
+| --- | --- |
 | `src/enums/auth.py` | `ClerkRole`, `AuthProvider` |
 | `src/enums/media.py` | `VoiceProfileStatus`, `AudiobookStatus` |
 | `src/enums/billing.py` | `PaymentProvider`, `SubscriptionPlan`, `SubscriptionStatus`, `PlanAudiobookLimit` |
@@ -238,21 +238,18 @@ Rule of thumb: **FK first, relationship only when you feel the pain of the extra
 
 ```bash
 # Generate a new migration from model changes
-alembic revision --autogenerate -m "describe the change"
+pnpm run db:make "describe the change"
 
 # Apply all pending migrations
-alembic upgrade head
-
-# Roll back one migration
-alembic downgrade -1
+pnpm run db:upgrade
 ```
 
 Alembic discovers tables through `src/models/__init__.py`. Every new model file **must** be imported there:
 
 ```python
 # src/models/__init__.py
-from src.models.user import User
-from src.models.voiceprofile import VoiceProfile
+from src.models.user.user import User
+from src.models.content.voiceprofile import VoiceProfile
 # ... add new models here
 ```
 
@@ -265,7 +262,7 @@ from src.models.voiceprofile import VoiceProfile
 All function and method docstrings must open with an **imperative verb**. Ruff enforces this with rule `D401`.
 
 | Bad | Good |
-|---|---|
+| --- | --- |
 | `"Convenience constructor that resolves the limit."` | `"Resolve the limit from the plan enum and return a new instance."` |
 | `"Helper for building the sync URL."` | `"Build and return the sync database URL."` |
 | `"Tracks where a user left off."` | `"Track where a user left off in a specific audiobook."` |
@@ -277,7 +274,7 @@ Class docstrings are exempt — they describe what the class *is*, not what it *
 ## Tables
 
 | Table | Model file | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `users` | `user/user.py` | Auth via Clerk; `external_auth_id` stores the provider sub claim |
 | `voice_profiles` | `content/voiceprofile.py` | User's cloned voice reference audio |
 | `books` | `content/book.py` | Platform book catalogue |
