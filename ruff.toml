@@ -1,0 +1,21 @@
+src = ["src"]
+exclude = ["src/alembic/versions/**"]
+
+[format]
+docstring-code-format = true
+
+[lint]
+select = ["ALL"]
+ignore = [
+    "FA102",
+    "INP001",
+    "DTZ005",
+    "DTZ007",
+    "DTZ011",
+    "FIX002",
+    "FBT001",
+    "FBT002",
+]
+
+[lint.per-file-ignores]
+"src/alembic/env.py" = ["ANN", "INP001"]
