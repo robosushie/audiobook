@@ -7,7 +7,7 @@ class ClerkRole(StrEnum):
     """User roles stored in Clerk JWT metadata and mirrored in the DB."""
 
     ADMIN = "admin"
-    USER = "user"
+    REGULAR = "regular"
 
 
 class AuthProvider(StrEnum):

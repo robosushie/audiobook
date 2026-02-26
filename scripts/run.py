@@ -34,7 +34,7 @@ ROOT = Path(__file__).parent.parent
 
 VENV_BIN = ROOT / ".venv" / ("Scripts" if sys.platform == "win32" else "bin")
 ALEMBIC = str(VENV_BIN / "alembic")
-PNPM = "pnpm"
+PNPM = "pnpm.cmd" if sys.platform == "win32" else "pnpm"
 
 
 def load_env() -> dict[str, str]:
@@ -145,7 +145,7 @@ def cmd_service_api(args: list[str]) -> None:
     run(
         [
             str(VENV_BIN / "uvicorn"),
-            "app:app",
+            "src.services.api.app:app",
             "--reload",
             "--host",
             "0.0.0.0",

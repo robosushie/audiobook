@@ -5,6 +5,7 @@ from src.models.billing.subscription import Subscription
 from src.models.billing.usage import Usage
 from src.models.content.audiobook import Audiobook
 from src.models.content.book import Book
+from src.models.content.review import Review
 from src.models.content.voiceprofile import VoiceProfile
 from src.models.player.playback import Playback
 from src.models.user.user import User
@@ -13,6 +14,7 @@ __all__ = [
     "Audiobook",
     "Book",
     "Playback",
+    "Review",
     "Subscription",
     "Usage",
     "User",
