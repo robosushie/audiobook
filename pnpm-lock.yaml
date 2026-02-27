@@ -106,6 +106,9 @@ importers:
       expo-linking:
         specifier: ~8.0.10
         version: 8.0.11(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@5.0.10))(react@19.1.0)
+      expo-navigation-bar:
+        specifier: ^5.0.10
+        version: 5.0.10(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@5.0.10))(react@19.1.0)
       expo-router:
         specifier: ~6.0.19
         version: 6.0.23(663cd24b26ee8877ce89d09a28a7bd32)
@@ -3878,6 +3881,13 @@ packages:
   expo-modules-core@3.0.29:
     resolution: {integrity: sha512-LzipcjGqk8gvkrOUf7O2mejNWugPkf3lmd9GkqL9WuNyeN2fRwU0Dn77e3ZUKI3k6sI+DNwjkq4Nu9fNN9WS7Q==}
     peerDependencies:
+      react: '*'
+      react-native: '*'
+
+  expo-navigation-bar@5.0.10:
+    resolution: {integrity: sha512-r9rdLw8mY6GPMQmVVOY/r1NBBw74DZefXHF60HxhRsdNI2kjc1wLdfWfR2rk4JVdOvdMDujnGrc9HQmqM3n8Jg==}
+    peerDependencies:
+      expo: '*'
       react: '*'
       react-native: '*'
 
@@ -10968,6 +10978,17 @@ snapshots:
       invariant: 2.2.4
       react: 19.1.0
       react-native: 0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@5.0.10)
+
+  expo-navigation-bar@5.0.10(expo@54.0.33)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@5.0.10))(react@19.1.0):
+    dependencies:
+      '@react-native/normalize-colors': 0.81.5
+      debug: 4.4.3
+      expo: 54.0.33(@babel/core@7.29.0)(@expo/metro-runtime@6.1.2)(bufferutil@4.1.0)(expo-router@6.0.23)(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@5.0.10))(react@19.1.0)(utf-8-validate@5.0.10)
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@5.0.10)
+      react-native-is-edge-to-edge: 1.2.1(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(utf-8-validate@5.0.10))(react@19.1.0)
+    transitivePeerDependencies:
+      - supports-color
 
   expo-router@6.0.23(663cd24b26ee8877ce89d09a28a7bd32):
     dependencies:

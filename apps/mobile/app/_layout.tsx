@@ -5,11 +5,19 @@ import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
+import * as NavigationBar from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
+import { Platform } from 'react-native';
 import * as React from 'react';
+
+const ANDROID_NAV_BAR_COLORS = {
+  dark: '#0e0d11',
+  light: '#fffaf2',
+} as const;
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -18,14 +26,25 @@ export {
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
+  const scheme = colorScheme === 'dark' ? 'dark' : 'light';
+
+  React.useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const bg = ANDROID_NAV_BAR_COLORS[scheme];
+    const buttonStyle = scheme === 'dark' ? 'light' : 'dark';
+    void NavigationBar.setBackgroundColorAsync(bg);
+    void NavigationBar.setButtonStyleAsync(buttonStyle);
+  }, [scheme]);
 
   return (
     <ClerkProvider tokenCache={tokenCache}>
-      <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <Routes />
-        <PortalHost />
-      </ThemeProvider>
+      <SafeAreaProvider>
+        <ThemeProvider value={NAV_THEME[colorScheme ?? 'light']}>
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <Routes />
+          <PortalHost />
+        </ThemeProvider>
+      </SafeAreaProvider>
     </ClerkProvider>
   );
 }
@@ -57,7 +76,7 @@ function Routes() {
 
       {/* Screens only shown when the user IS signed in */}
       <Stack.Protected guard={isSignedIn}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="(main)" options={{ headerShown: false }} />
       </Stack.Protected>
 
       {/* Screens outside the guards are accessible to everyone (e.g. not found) */}

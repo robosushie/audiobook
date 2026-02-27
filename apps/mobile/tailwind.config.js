@@ -41,6 +41,15 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        badge: {
+          DEFAULT: 'hsl(var(--badge-bg))',
+          foreground: 'hsl(var(--badge-foreground))',
+        },
+        player: {
+          bg: 'hsl(var(--player-bg))',
+          progress: 'hsl(var(--player-progress))',
+          track: 'hsl(var(--player-track))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
