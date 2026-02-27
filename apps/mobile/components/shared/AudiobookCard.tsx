@@ -8,12 +8,14 @@ export interface AudiobookCardProps {
   width?: number;
 }
 
-export function AudiobookCard({ book, onPress, width = 128 }: AudiobookCardProps) {
+export function AudiobookCard({ book, onPress, width }: AudiobookCardProps) {
+  const cardStyle = width != null ? { width } : undefined;
+
   return (
     <Pressable
       onPress={() => onPress(book)}
-      className="flex-col items-start rounded-xl overflow-hidden bg-card shadow-md max-w-[140px]"
-      style={{ width }}
+      className="flex-col items-start rounded-xl overflow-hidden bg-card shadow-md max-w-[160px]"
+      style={cardStyle}
     >
       <View className="w-full aspect-square relative overflow-hidden bg-muted">
         <Image

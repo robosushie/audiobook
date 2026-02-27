@@ -12,6 +12,7 @@
     "db:upgrade": "python scripts/run.py db:upgrade",
     "app:mobile": "python scripts/run.py app:mobile",
     "app:web": "python scripts/run.py app:web",
-    "service:api": "python scripts/run.py service:api"
+    "service:api": "python scripts/run.py service:api",
+    "app:clean:install": "pnpm dlx rimraf node_modules apps/web/node_modules apps/mobile/node_modules && pnpm install"
   }
 }

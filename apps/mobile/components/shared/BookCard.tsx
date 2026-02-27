@@ -10,12 +10,14 @@ export interface BookCardProps {
   width?: number;
 }
 
-export function BookCard({ book, onPress, width = 128 }: BookCardProps) {
+export function BookCard({ book, onPress, width }: BookCardProps) {
+  const cardStyle = width != null ? { width } : undefined;
+
   return (
     <Pressable
       onPress={() => onPress(book)}
-      className="flex-1 flex-col items-start rounded-2xl overflow-hidden bg-card shadow-md max-w-[140px]"
-      style={{ width }}
+      className="flex-1 flex-col items-start rounded-2xl overflow-hidden bg-card shadow-md max-w-[160px]"
+      style={cardStyle}
     >
       <View className="w-full aspect-[3/4] relative overflow-hidden bg-muted">
         <Image

@@ -72,7 +72,7 @@ export function HomeScreen() {
         >
           {filteredLibrary.length > 0 ? (
             filteredLibrary.map((book) => (
-              <AudiobookCard key={book.id} book={book} onPress={playAudiobook} />
+              <AudiobookCard key={book.id} book={book} onPress={playAudiobook} width={140} />
             ))
           ) : (
             <Text className="text-sm text-muted-foreground py-4 px-5">No audiobooks match your filters.</Text>
@@ -90,7 +90,7 @@ export function HomeScreen() {
           contentContainerStyle={{ gap: 10, paddingHorizontal: 20, paddingBottom: 8 }}
         >
           {recentlyPlayed.map((book) => (
-            <AudiobookCard key={book.id} book={book} onPress={playAudiobook} />
+            <AudiobookCard key={book.id} book={book} onPress={playAudiobook} width={140} />
           ))}
         </ScrollView>
       </View>
@@ -107,7 +107,7 @@ export function HomeScreen() {
         >
           {recommendedRow1.length > 0 ? (
             recommendedRow1.map((book) => (
-              <BookCard key={book.id} book={book} onPress={openBook} width={128} />
+              <BookCard key={book.id} book={book} onPress={openBook} width={140} />
             ))
           ) : (
             <Text className="text-sm text-muted-foreground py-4 px-5">No books match your filters.</Text>
@@ -120,7 +120,7 @@ export function HomeScreen() {
             contentContainerStyle={{ gap: 10, paddingHorizontal: 20, paddingBottom: 8, marginTop: 10 }}
           >
             {recommendedRow2.map((book) => (
-              <BookCard key={book.id} book={book} onPress={openBook} width={128} />
+              <BookCard key={book.id} book={book} onPress={openBook} width={140} />
             ))}
           </ScrollView>
         )}
@@ -137,7 +137,7 @@ export function HomeScreen() {
             contentContainerStyle={{ gap: 10, paddingHorizontal: 20, paddingBottom: 8 }}
           >
             {newestBooks.map((book) => (
-              <BookCard key={book.id} book={book} onPress={openBook} width={128} />
+              <BookCard key={book.id} book={book} onPress={openBook} width={140} />
             ))}
           </ScrollView>
         </View>

@@ -9,15 +9,13 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-function Progress({
-  className,
-  value,
-  indicatorClassName,
-  ...props
-}: ProgressPrimitive.RootProps &
+export type ProgressProps = ProgressPrimitive.RootProps &
   React.RefAttributes<ProgressPrimitive.RootRef> & {
+    className?: string;
     indicatorClassName?: string;
-  }) {
+  };
+
+function Progress({ className, value, indicatorClassName, ...props }: ProgressProps) {
   return (
     <ProgressPrimitive.Root
       className={cn('bg-primary/20 relative h-2 w-full overflow-hidden rounded-full', className)}

@@ -91,9 +91,9 @@ export function LibraryScreen() {
       <View className="px-5">
         <Text className="text-lg font-bold text-foreground mb-3">My Audiobooks</Text>
         {filteredCompleted.length > 0 ? (
-          <View className="flex-row flex-wrap gap-3" style={{ gap: 12 }}>
+          <View className="flex-row flex-wrap -mx-1.5">
             {filteredCompleted.map((book) => (
-              <View key={book.id} style={{ width: '47%' }}>
+              <View key={book.id} className="w-1/2 px-1.5 mb-3">
                 <AudiobookCard book={book} onPress={playAudiobook} />
               </View>
             ))}

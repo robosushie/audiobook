@@ -91,9 +91,9 @@ export function SearchScreen() {
           {query.trim() ? 'Results for "' + query + '"' : 'All Books'}
         </Text>
         {filteredBooks.length > 0 ? (
-          <View className="flex-row flex-wrap gap-3" style={{ gap: 12 }}>
+          <View className="flex-row flex-wrap -mx-1.5">
             {filteredBooks.map((book) => (
-              <View key={book.id} style={{ width: '47%' }}>
+              <View key={book.id} className="w-1/2 px-1.5 mb-3">
                 <BookCard book={book} onPress={openBook} />
               </View>
             ))}
