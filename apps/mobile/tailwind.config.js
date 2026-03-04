@@ -7,6 +7,11 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      fontFamily: {
+        heading: ['Baloo2-Bold'],
+        body: ['Nunito-Regular'],
+        bodySemibold: ['Nunito-SemiBold'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

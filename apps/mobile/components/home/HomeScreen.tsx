@@ -63,7 +63,7 @@ export function HomeScreen() {
 
       <View>
         <View className="flex-row items-center justify-between px-5 mb-3">
-          <Text className="text-lg font-bold text-foreground">My Library</Text>
+          <Text className="text-lg font-bold text-foreground font-heading">My Library</Text>
         </View>
         <ScrollView
           horizontal
@@ -82,7 +82,7 @@ export function HomeScreen() {
 
       <View>
         <View className="flex-row items-center justify-between px-5 mb-3">
-          <Text className="text-lg font-bold text-foreground">Recent Listens</Text>
+          <Text className="text-lg font-bold text-foreground font-heading">Recent Listens</Text>
         </View>
         <ScrollView
           horizontal
@@ -97,7 +97,7 @@ export function HomeScreen() {
 
       <View>
         <View className="flex-row items-center justify-between px-5 mb-3">
-          <Text className="text-lg font-bold text-foreground">Recommended For You</Text>
+          <Text className="text-lg font-bold text-foreground font-heading">Recommended For You</Text>
           <Text className="text-[10px] text-muted-foreground uppercase tracking-wider">Books</Text>
         </View>
         <ScrollView
@@ -129,7 +129,7 @@ export function HomeScreen() {
       {newestBooks.length > 0 && (
         <View>
           <View className="flex-row items-center justify-between px-5 mb-3">
-            <Text className="text-lg font-bold text-foreground">Newest Arrivals</Text>
+            <Text className="text-lg font-bold text-foreground font-heading">Newest Arrivals</Text>
           </View>
           <ScrollView
             horizontal

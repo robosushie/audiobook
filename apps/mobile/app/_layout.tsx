@@ -12,6 +12,14 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { Platform } from 'react-native';
+import { useFonts } from 'expo-font';
+import {
+  Baloo2_700Bold,
+} from '@expo-google-fonts/baloo-2';
+import {
+  Nunito_400Regular,
+  Nunito_600SemiBold,
+} from '@expo-google-fonts/nunito';
 import * as React from 'react';
 
 const ANDROID_NAV_BAR_COLORS = {
@@ -28,6 +36,12 @@ export default function RootLayout() {
   const { colorScheme } = useColorScheme();
   const scheme = colorScheme === 'dark' ? 'dark' : 'light';
 
+  const [fontsLoaded] = useFonts({
+    'Baloo2-Bold': Baloo2_700Bold,
+    'Nunito-Regular': Nunito_400Regular,
+    'Nunito-SemiBold': Nunito_600SemiBold,
+  });
+
   React.useEffect(() => {
     if (Platform.OS !== 'android') return;
     const bg = ANDROID_NAV_BAR_COLORS[scheme];
@@ -35,6 +49,10 @@ export default function RootLayout() {
     void NavigationBar.setBackgroundColorAsync(bg);
     void NavigationBar.setButtonStyleAsync(buttonStyle);
   }, [scheme]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <ClerkProvider tokenCache={tokenCache}>

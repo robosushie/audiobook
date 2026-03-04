@@ -23,7 +23,7 @@ class UserCreate(UserBase):
 
     external_auth_id: str
     auth_provider: AuthProvider = AuthProvider.CLERK
-    role: ClerkRole = ClerkRole.USER
+    role: ClerkRole = ClerkRole.REGULAR
 
 
 class UserUpdate(SQLModel):
@@ -61,4 +61,4 @@ class User(TimestampMixin, VerificationMixin, UserBase, table=True):
 
     external_auth_id: str = Field(max_length=128, unique=True, index=True)
     auth_provider: AuthProvider = Field(default=AuthProvider.CLERK)
-    role: ClerkRole = Field(default=ClerkRole.USER)
+    role: ClerkRole = Field(default=ClerkRole.REGULAR)

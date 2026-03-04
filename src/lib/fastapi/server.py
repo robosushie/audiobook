@@ -3,7 +3,10 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from src.lib.fastapi.routes.audiobooks import router as audiobooks_router
+from src.lib.fastapi.routes.books import router as books_router
 from src.lib.fastapi.routes.health import router as health_router
+from src.lib.fastapi.routes.voice_profiles import router as voice_profiles_router
 from src.lib.fastapi.templates.scalar import DOCS_TEMPLATE
 from src.lib.schemas.fastapi import Middleware, Server
 
@@ -22,6 +25,9 @@ def create_server(server: Server, middleware: Middleware) -> tuple[FastAPI, APIR
 
     router = APIRouter(prefix=server.base_path)
     router.include_router(health_router)
+    router.include_router(books_router)
+    router.include_router(voice_profiles_router)
+    router.include_router(audiobooks_router)
     # Router will be included in app.py after all routes are added
 
     if server.enable_docs:

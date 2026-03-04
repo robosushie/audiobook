@@ -16,6 +16,7 @@ Usage (directly):
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -52,15 +53,34 @@ def load_env() -> dict[str, str]:
     return env
 
 
+def load_env_optional() -> dict[str, str]:
+    """Read root .env if present; return empty dict otherwise."""
+    env_file = ROOT / ".env"
+    if not env_file.exists():
+        return {}
+    env: dict[str, str] = {}
+    for raw in env_file.read_text().splitlines():
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, _, value = stripped.partition("=")
+        env[key.strip()] = value.strip()
+    return env
+
+
 def die(msg: str) -> NoReturn:
     """Print an error message to stderr and exit with code 1."""
     print(f"Error: {msg}", file=sys.stderr)
     sys.exit(1)
 
 
-def run(cmd: list[str]) -> None:
-    """Run a subprocess command, exit with its return code on failure."""
-    result = subprocess.run(cmd, cwd=ROOT, check=False)
+def run(cmd: list[str], extra_env: dict[str, str] | None = None) -> None:
+    """Run a subprocess command, exit with its return code on failure.
+
+    If extra_env is provided, it is merged with os.environ for the subprocess.
+    """
+    env = {**os.environ, **extra_env} if extra_env else None
+    result = subprocess.run(cmd, cwd=ROOT, env=env, check=False)
     if result.returncode != 0:
         sys.exit(result.returncode)
 
@@ -129,19 +149,28 @@ def cmd_db_upgrade(args: list[str]) -> None:
 
 
 def cmd_app_mobile(args: list[str]) -> None:
-    """Run a pnpm script inside apps/mobile (e.g. dev, build)."""
+    """Run a pnpm script inside apps/mobile (e.g. dev, build).
+
+    Injects root .env into the process so both web and mobile use the same env.
+    """
     require_args(args, 1, "pnpm run app:mobile <script>  e.g. pnpm run app:mobile dev")
-    run([PNPM, "--dir", "apps/mobile", "run", *args])
+    run([PNPM, "--dir", "apps/mobile", "run", *args], extra_env=load_env_optional())
 
 
 def cmd_app_web(args: list[str]) -> None:
-    """Run a pnpm script inside apps/web (e.g. dev, build)."""
+    """Run a pnpm script inside apps/web (e.g. dev, build).
+
+    Injects root .env into the process so both web and mobile use the same env.
+    """
     require_args(args, 1, "pnpm run app:web <script>  e.g. pnpm run app:web dev")
-    run([PNPM, "--dir", "apps/web", "run", *args])
+    run([PNPM, "--dir", "apps/web", "run", *args], extra_env=load_env_optional())
 
 
 def cmd_service_api(args: list[str]) -> None:
-    """Start the FastAPI development server."""
+    """Start the FastAPI development server.
+
+    Injects root .env so the API uses the same config as web/mobile.
+    """
     run(
         [
             str(VENV_BIN / "uvicorn"),
@@ -152,6 +181,7 @@ def cmd_service_api(args: list[str]) -> None:
             "--port",
             "8000",
         ],
+        extra_env=load_env_optional(),
     )
 
 

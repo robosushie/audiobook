@@ -1,8 +1,8 @@
-"""Initial Migration
+"""initial_migration
 
-Revision ID: 7c0571b2c49a
+Revision ID: 70e6d21bad8e
 Revises: 
-Create Date: 2026-02-22 02:51:52.431277
+Create Date: 2026-03-01 18:29:21.105486
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '7c0571b2c49a'
+revision: str = '70e6d21bad8e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,11 +34,15 @@ def upgrade() -> None:
     sa.Column('content_url', sqlmodel.sql.sqltypes.AutoString(length=2048), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_trending', sa.Boolean(), nullable=False),
+    sa.Column('average_rating', sa.Float(), nullable=True),
+    sa.Column('rating_count', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('categories', sa.ARRAY(sa.Enum('ADVENTURE', 'FAIRYTALE', 'MYTHICAL', 'FANTASY', 'SCIENCE_FICTION', 'MYSTERY', 'ROMANCE', 'HORROR', 'BIOGRAPHY', 'HISTORY', 'CHILDREN', 'YOUNG_ADULT', 'SELF_HELP', 'RELIGION', 'OTHER', name='bookcategory')), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index('ix_books_categories', 'books', ['categories'], unique=False, postgresql_using='gin')
     op.create_table('users',
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('first_name', sqlmodel.sql.sqltypes.AutoString(length=64), nullable=False),
@@ -52,11 +56,27 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('external_auth_id', sqlmodel.sql.sqltypes.AutoString(length=128), nullable=False),
     sa.Column('auth_provider', sa.Enum('CLERK', 'FIREBASE', 'AUTH0', name='authprovider'), nullable=False),
-    sa.Column('role', sa.Enum('ADMIN', 'USER', name='clerkrole'), nullable=False),
+    sa.Column('role', sa.Enum('ADMIN', 'REGULAR', name='clerkrole'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_external_auth_id'), 'users', ['external_auth_id'], unique=True)
+    op.create_table('book_reviews',
+    sa.Column('rating', sa.Integer(), nullable=False),
+    sa.Column('body', sqlmodel.sql.sqltypes.AutoString(length=2000), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('user_id', sa.Uuid(), nullable=False),
+    sa.Column('book_id', sa.Uuid(), nullable=False),
+    sa.CheckConstraint('rating >= 1 AND rating <= 5', name='ck_book_reviews_rating'),
+    sa.ForeignKeyConstraint(['book_id'], ['books.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'book_id', name='uq_book_reviews_user_id_book_id')
+    )
+    op.create_index(op.f('ix_book_reviews_book_id'), 'book_reviews', ['book_id'], unique=False)
+    op.create_index(op.f('ix_book_reviews_user_id'), 'book_reviews', ['user_id'], unique=False)
     op.create_table('subscriptions',
     sa.Column('external_customer_id', sqlmodel.sql.sqltypes.AutoString(length=128), nullable=False),
     sa.Column('external_subscription_id', sqlmodel.sql.sqltypes.AutoString(length=128), nullable=False),
@@ -150,8 +170,12 @@ def downgrade() -> None:
     op.drop_table('usages')
     op.drop_index(op.f('ix_subscriptions_user_id'), table_name='subscriptions')
     op.drop_table('subscriptions')
+    op.drop_index(op.f('ix_book_reviews_user_id'), table_name='book_reviews')
+    op.drop_index(op.f('ix_book_reviews_book_id'), table_name='book_reviews')
+    op.drop_table('book_reviews')
     op.drop_index(op.f('ix_users_external_auth_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
+    op.drop_index('ix_books_categories', table_name='books', postgresql_using='gin')
     op.drop_table('books')
     # ### end Alembic commands ###

@@ -28,14 +28,14 @@ export function AudiobookCard({ book, onPress, width }: AudiobookCardProps) {
         </View>
       </View>
       <View className="p-2.5 gap-0.5 w-full">
-        <Text className="font-semibold text-xs text-foreground truncate" numberOfLines={1}>
+        <Text className="font-heading text-xs text-foreground truncate" numberOfLines={1}>
           {book.title}
         </Text>
         <Text className="text-[10px] text-muted-foreground truncate" numberOfLines={1}>
           {book.author}
         </Text>
         {book.voiceName && (
-          <Text className="text-[10px] text-primary font-medium">{book.voiceName}</Text>
+          <Text className="text-[10px] text-primary font-bodySemibold">{book.voiceName}</Text>
         )}
         <View className="flex-row items-center gap-1.5 pt-0.5">
           <View className="bg-secondary px-1.5 py-0.5 rounded-full">

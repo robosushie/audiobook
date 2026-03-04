@@ -34,7 +34,7 @@ export function BookCard({ book, onPress, width }: BookCardProps) {
         )}
       </View>
       <View className="p-2.5 gap-0.5 w-full">
-        <Text className="font-semibold text-xs text-foreground truncate" numberOfLines={1}>
+        <Text className="font-heading text-xs text-foreground truncate" numberOfLines={1}>
           {book.title}
         </Text>
         <Text className="text-[10px] text-muted-foreground truncate" numberOfLines={1}>
