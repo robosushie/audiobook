@@ -10,12 +10,12 @@
     "db:create": "python scripts/run.py db:create",
     "db:make": "python scripts/run.py db:make",
     "db:upgrade": "python scripts/run.py db:upgrade",
-    "app:mobile": "python scripts/run.py app:mobile",
-    "app:web": "python scripts/run.py app:web",
     "service:api": "python scripts/run.py service:api",
-    "app:clean:install": "pnpm dlx rimraf node_modules apps/web/node_modules apps/mobile/node_modules && pnpm install"
-  },
-  "dependencies": {
-    "recharts": "2.15.4"
+    "service:event": "python scripts/run.py service:event",
+    "app:web": "pnpm -C apps/web run dev",
+    "app:web:build": "pnpm -C apps/web run build",
+    "app:admin": "pnpm -C apps/admin run dev",
+    "app:admin:build": "pnpm -C apps/admin run build",
+    "bootstrap": "python scripts/bootstrap/run.py"
   }
 }

@@ -1,7 +1,7 @@
 """Auth-related Pydantic schemas."""
 
 from pydantic import BaseModel
-from src.enums.auth import ClerkRole
+from src.enums.auth import AuthRole
 
 
 class ClerkCredentials(BaseModel):
@@ -9,4 +9,4 @@ class ClerkCredentials(BaseModel):
 
     id: str
     type: str
-    role: ClerkRole
+    role: AuthRole

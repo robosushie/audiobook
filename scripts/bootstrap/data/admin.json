@@ -1,0 +1,15 @@
+{
+  "email": "ssamuel.sushant@gmail.com",
+  "name": {
+    "first": "Sushant",
+    "middle": null,
+    "last": "Samuel"
+  },
+  "role": "admin",
+  "gender": "male",
+  "verified": true,
+  "public_metadata": {
+    "role": "admin",
+    "type": "individual"
+  }
+}

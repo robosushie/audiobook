@@ -38,6 +38,7 @@
   },
 
   // Python
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
   "[python]": {
     "editor.tabSize": 4,
     "editor.defaultFormatter": "charliermarsh.ruff",

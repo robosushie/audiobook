@@ -21,7 +21,7 @@ src/
 │   ├── versions/           # Auto-generated migration files
 │   └── script.py.mako
 ├── enums/
-│   ├── auth.py             # ClerkRole, AuthProvider
+│   ├── auth.py             # AuthRole, AuthProvider
 │   ├── billing.py          # SubscriptionPlan, SubscriptionStatus, PaymentProvider, PlanAudiobookLimit
 │   └── media.py            # AudiobookStatus, VoiceProfileStatus
 ├── models/
@@ -206,7 +206,7 @@ class PlanAudiobookLimit(IntEnum):
 
 | File | Enums |
 | --- | --- |
-| `src/enums/auth.py` | `ClerkRole`, `AuthProvider` |
+| `src/enums/auth.py` | `AuthRole`, `AuthProvider` |
 | `src/enums/media.py` | `VoiceProfileStatus`, `AudiobookStatus` |
 | `src/enums/billing.py` | `PaymentProvider`, `SubscriptionPlan`, `SubscriptionStatus`, `PlanAudiobookLimit` |
 

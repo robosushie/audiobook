@@ -1,0 +1,14 @@
+---
+description: Independent app packages; no pnpm workspace at repo root
+alwaysApply: true
+---
+
+# Apps (independent packages)
+
+Client apps under `apps/` (e.g. `apps/web`, `apps/mobile`) are **independent** packages.
+
+- Each app has its own `package.json`, lockfile, and install lifecycle.
+- Run scripts from the app directory (e.g. `pnpm --dir apps/web dev`) or via root `scripts/run.py` helpers when present.
+- Do **not** add or restore a root `pnpm-workspace.yaml`, and do not wire apps through a pnpm workspace.
+- Do not assume shared workspace packages, hoisted monorepo dependencies, or root-level `pnpm install` for app deps.
+- The repo root `package.json` is for repo-wide tooling only (e.g. DB and API scripts), not as a workspace parent for apps.

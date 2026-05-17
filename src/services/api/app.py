@@ -1,13 +1,18 @@
-"""Main platform app routes."""
+"""REST API entry point (routes only; Inngest workers live in ``services.event.app``)."""
 
-# from fastapi import Depends
-# from src.apps.platform.routes.pulse import router as pulse_router
-# from src.apps.platform.routes.users import router as user_router
-from src.enums.auth import ClerkRole
+from fastapi import Depends
+
+from src.enums.auth import AuthRole
 from src.lib.auth.clerk import create_authorization
 from src.lib.fastapi.server import create_server
 from src.lib.schemas.fastapi import Middleware
 from src.lib.schemas.fastapi import Server as FastAPI
+from src.services.api.routes.audiobooks import router as audiobooks_router
+from src.services.api.routes.books import router as books_router
+from src.services.api.routes.references import router as references_router
+from src.services.api.routes.stats import router as stats_router
+from src.services.api.routes.users import router as users_router
+from src.services.api.routes.voice import router as voice_router
 
 app, router = create_server(
     FastAPI(
@@ -25,7 +30,37 @@ app, router = create_server(
     ),
 )
 
-auth = create_authorization(required_roles={ClerkRole.REGULAR, ClerkRole.ADMIN})
+user_auth = create_authorization(required_roles={AuthRole.ADMIN, AuthRole.REGULAR})
+admin_auth = create_authorization(required_roles={AuthRole.ADMIN})
 
-# Include router after all routes are added so OpenAPI picks them up
 app.include_router(router)
+app.include_router(
+    stats_router,
+    prefix="/api",
+    dependencies=[Depends(admin_auth)],
+)
+app.include_router(
+    users_router,
+    prefix="/api",
+    dependencies=[Depends(admin_auth)],
+)
+app.include_router(
+    books_router,
+    prefix="/api",
+    dependencies=[Depends(user_auth)],
+)
+app.include_router(
+    references_router,
+    prefix="/api",
+    dependencies=[Depends(user_auth)],
+)
+app.include_router(
+    voice_router,
+    prefix="/api",
+    dependencies=[Depends(user_auth)],
+)
+app.include_router(
+    audiobooks_router,
+    prefix="/api",
+    dependencies=[Depends(user_auth)],
+)

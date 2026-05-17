@@ -3,8 +3,8 @@
 from enum import StrEnum
 
 
-class ClerkRole(StrEnum):
-    """User roles stored in Clerk JWT metadata and mirrored in the DB."""
+class AuthRole(StrEnum):
+    """User roles stored in auth JWT metadata and mirrored in the DB."""
 
     ADMIN = "admin"
     REGULAR = "regular"

@@ -1,12 +1,18 @@
 """Unified CLI runner for all project scripts.
 
-Usage (via pnpm):
+Usage (via pnpm at repo root):
     pnpm run db:create
     pnpm run db:make "migration name"
     pnpm run db:upgrade
-    pnpm run app:mobile dev
-    pnpm run app:web dev
-    pnpm run service:api
+    pnpm run app:web          # Vite apps/web :3000
+    pnpm run app:admin        # Vite apps/admin :3001
+    pnpm run service:api       # REST API :8000
+    pnpm run service:event     # Event service :8001 (/api/health + /api/inngest)
+    python scripts/bootstrap/run.py
+
+Usage (via python — mobile / env injection):
+    python scripts/run.py app:mobile dev
+    python scripts/run.py app:web dev
 
 Usage (directly):
     python scripts/run.py db:create
@@ -36,6 +42,8 @@ ROOT = Path(__file__).parent.parent
 VENV_BIN = ROOT / ".venv" / ("Scripts" if sys.platform == "win32" else "bin")
 ALEMBIC = str(VENV_BIN / "alembic")
 PNPM = "pnpm.cmd" if sys.platform == "win32" else "pnpm"
+API_PORT = 8000
+EVENT_PORT = 8001
 
 
 def load_env() -> dict[str, str]:
@@ -98,7 +106,11 @@ def require_args(args: list[str], count: int, usage: str) -> None:
 
 
 def cmd_db_create(_args: list[str]) -> None:
-    """Create the application database if it does not already exist."""
+    """Create the application database, or drop all tables if it already exists.
+
+    After ensuring the database exists and is empty, runs Alembic migrations to
+    recreate the schema.
+    """
     if not _PSYCOPG2_AVAILABLE:
         die("psycopg2 is not installed. Run: .venv/Scripts/pip install psycopg2-binary")
 
@@ -113,7 +125,7 @@ def cmd_db_create(_args: list[str]) -> None:
         die("DATABASE_NAME is not set in .env")
 
     try:
-        conn = psycopg2.connect(
+        admin_conn = psycopg2.connect(
             host=host,
             port=port,
             user=user,
@@ -123,18 +135,51 @@ def cmd_db_create(_args: list[str]) -> None:
     except psycopg2.OperationalError as exc:
         die(f"Could not connect to PostgreSQL: {exc}")
 
-    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cursor = conn.cursor()
+    admin_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    admin_cursor = admin_conn.cursor()
 
-    cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db_name,))
-    if cursor.fetchone():
-        print(f"Database '{db_name}' already exists.")
+    admin_cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db_name,))
+    db_exists = admin_cursor.fetchone() is not None
+
+    if db_exists:
+        print(f"Database '{db_name}' already exists. Dropping all tables...")
+        admin_cursor.close()
+        admin_conn.close()
+
+        try:
+            target_conn = psycopg2.connect(
+                host=host,
+                port=port,
+                user=user,
+                password=password,
+                dbname=db_name,
+            )
+        except psycopg2.OperationalError as exc:
+            die(f"Could not connect to '{db_name}': {exc}")
+
+        target_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        target_cursor = target_conn.cursor()
+        target_cursor.execute("DROP SCHEMA public CASCADE")
+        target_cursor.execute("CREATE SCHEMA public")
+        target_cursor.execute(
+            pg_sql.SQL("GRANT ALL ON SCHEMA public TO {}").format(
+                pg_sql.Identifier(user)
+            ),
+        )
+        target_cursor.execute("GRANT ALL ON SCHEMA public TO public")
+        target_cursor.close()
+        target_conn.close()
+        print(f"All tables in '{db_name}' dropped.")
     else:
-        cursor.execute(pg_sql.SQL("CREATE DATABASE {}").format(pg_sql.Identifier(db_name)))
+        admin_cursor.execute(
+            pg_sql.SQL("CREATE DATABASE {}").format(pg_sql.Identifier(db_name))
+        )
+        admin_cursor.close()
+        admin_conn.close()
         print(f"Database '{db_name}' created successfully.")
 
-    cursor.close()
-    conn.close()
+    print("Running migrations to recreate tables...")
+    run([ALEMBIC, "upgrade", "head"])
 
 
 def cmd_db_make(args: list[str]) -> None:
@@ -148,13 +193,26 @@ def cmd_db_upgrade(args: list[str]) -> None:
     run([ALEMBIC, "upgrade", "head"])
 
 
+def _run_pnpm_in_app(app_dir: str, args: list[str]) -> None:
+    """Run `pnpm run <script>` with cwd set to apps/<app_dir>."""
+    app_root = ROOT / "apps" / app_dir
+    if not app_root.is_dir():
+        die(f"app directory not found: {app_root}")
+    env = {**os.environ, **load_env_optional()}
+    result = subprocess.run([PNPM, "run", *args], cwd=app_root, env=env, check=False)
+    if result.returncode != 0:
+        sys.exit(result.returncode)
+
+
 def cmd_app_mobile(args: list[str]) -> None:
     """Run a pnpm script inside apps/mobile (e.g. dev, build).
 
     Injects root .env into the process so both web and mobile use the same env.
     """
-    require_args(args, 1, "pnpm run app:mobile <script>  e.g. pnpm run app:mobile dev")
-    run([PNPM, "--dir", "apps/mobile", "run", *args], extra_env=load_env_optional())
+    require_args(
+        args, 1, "python scripts/run.py app:mobile <script>  e.g. app:mobile dev"
+    )
+    _run_pnpm_in_app("mobile", args)
 
 
 def cmd_app_web(args: list[str]) -> None:
@@ -162,8 +220,22 @@ def cmd_app_web(args: list[str]) -> None:
 
     Injects root .env into the process so both web and mobile use the same env.
     """
-    require_args(args, 1, "pnpm run app:web <script>  e.g. pnpm run app:web dev")
-    run([PNPM, "--dir", "apps/web", "run", *args], extra_env=load_env_optional())
+    require_args(args, 1, "python scripts/run.py app:web <script>  e.g. app:web dev")
+    _run_pnpm_in_app("web", args)
+
+
+def cmd_app_admin(args: list[str]) -> None:
+    """Run a pnpm script inside apps/admin (e.g. dev, build)."""
+    require_args(args, 1, "python scripts/run.py app:admin <script>  e.g. app:admin dev")
+    _run_pnpm_in_app("admin", args)
+
+
+def cmd_bootstrap(_args: list[str]) -> None:
+    """Bootstrap Clerk + DB users and reference passages from scripts/bootstrap/data/*.json."""
+    run(
+        [sys.executable, str(ROOT / "scripts" / "bootstrap" / "run.py")],
+        extra_env=load_env_optional(),
+    )
 
 
 def cmd_service_api(args: list[str]) -> None:
@@ -179,7 +251,24 @@ def cmd_service_api(args: list[str]) -> None:
             "--host",
             "0.0.0.0",
             "--port",
-            "8000",
+            str(API_PORT),
+        ],
+        extra_env=load_env_optional(),
+    )
+
+
+def cmd_service_event(args: list[str]) -> None:
+    """Start the event service (health + Inngest function serve on /api/inngest)."""
+    run(
+        [
+            str(VENV_BIN / "uvicorn"),
+            "src.services.event.app:app",
+            "--reload",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            str(EVENT_PORT),
+            *args,
         ],
         extra_env=load_env_optional(),
     )
@@ -195,7 +284,10 @@ COMMANDS: dict[str, object] = {
     "db:upgrade": cmd_db_upgrade,
     "app:mobile": cmd_app_mobile,
     "app:web": cmd_app_web,
+    "app:admin": cmd_app_admin,
+    "bootstrap": cmd_bootstrap,
     "service:api": cmd_service_api,
+    "service:event": cmd_service_event,
 }
 
 

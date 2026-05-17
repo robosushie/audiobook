@@ -1,0 +1,52 @@
+---
+description: Where to place schemas, enums, lib helpers, and routes under src/
+alwaysApply: true
+---
+
+# Python project layout (`src/`)
+
+All paths below are under `src/` unless noted. **ORM models and Alembic** are covered in `database-models.mdc`.
+
+## API schemas (non-DB, Pydantic)
+
+- Request/response and FastAPI body/query models that are **not** ORM mappings: **`lib/schemas/`** only.
+- Name by domain (e.g. `lib/schemas/user.py`, `lib/schemas/auth.py`).
+
+## Enums
+
+- Shared/domain enums: **`lib/enums/`** only (e.g. `lib/enums/auth.py`).
+- Do not add new top-level `enums/` at `src/enums/`; prefer `lib/enums/` for new code and migrate legacy `src/enums/` when touching those files.
+
+## Feature vs module helpers
+
+Co-locate **feature-vertical** code (user provisioning, route helpers for that area, domain services, repos) under:
+
+- **`lib/feature/<name>/`** — e.g. `lib/feature/user/`, `lib/feature/audiobook/`
+
+Put **cross-cutting / infrastructure-style** libraries (auth client, DB session helpers, generic FastAPI utilities not owned by one feature) under:
+
+- **`lib/module/<name>/`** — e.g. `lib/module/auth/`, `lib/module/db/`
+
+Feature folders hold helpers and glue that **import** from `models/` and `lib/schemas/`; they do not replace `models/` for ORM definitions.
+
+## Routes and services
+
+- **HTTP route handlers** live under **`services/api/routes/`** and are mounted from **`services/api/app.py`**. Shared FastAPI app factory and **health** live under **`lib/fastapi/`** (`server.py`, `routes/health.py`). **move reusable logic** into `lib/feature/<name>/` or `lib/module/<name>/` instead of growing route files.
+- **Background jobs (Inngest)** live under **`services/event/`** — entry point **`services/event/app.py`** (health + `/api/inngest` only). Also: `client.py`, `enqueue.py`, `registry.py`, `functions/`. Event payloads: **`lib/schemas/events.py`**. Job DB sessions: **`lib/module/inngest/db.py`**. REST API does **not** mount Inngest.
+
+## `__init__.py`
+
+- **Only** `models/__init__.py` — registers all ORM tables for Alembic (`import src.models`).
+- Do **not** add `__init__.py` to other packages; import explicit modules (e.g. `from src.lib.module.storage.supabase import upload_voice`).
+
+## Quick reference
+
+| Kind | Location |
+|------|----------|
+| Pydantic API DTOs | `lib/schemas/...` |
+| Enums | `lib/enums/...` |
+| Feature-specific helpers | `lib/feature/<name>/...` |
+| Shared module / infra helpers | `lib/module/<name>/...` |
+| API route modules (except health) | `services/api/routes/...` |
+| Health route + FastAPI factory | `lib/fastapi/...` |
+| Inngest client, enqueue, functions | `services/event/...` |

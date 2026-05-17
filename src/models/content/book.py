@@ -1,11 +1,15 @@
-"""Book models - table + Pydantic read/write variants."""
+"""Book models — table + Pydantic read/write variants."""
 
 from uuid import UUID, uuid4
 
-from sqlalchemy import ARRAY, Column, Index
+from sqlalchemy import ARRAY, Column, Index, String
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
+from src.constants.model import ORM_METADATA
 from src.enums.content import BookCategory
+from src.enums.language import Language
+from src.lib.schemas.common import UserName
 from src.models.common import TimestampMixin
 
 
@@ -13,11 +17,11 @@ class BookBase(SQLModel):
     """Fields shared by all book schemas."""
 
     title: str = Field(max_length=256)
-    author: str = Field(max_length=256)
+    author: UserName
     description: str | None = None
     cover_url: str | None = Field(default=None, max_length=2048)
     genre: str | None = Field(default=None, max_length=64)
-    language: str = Field(max_length=16)
+    language: Language = Field(sa_type=String(16))
     age_min: int | None = Field(default=None, ge=0)
     age_max: int | None = Field(default=None, ge=0)
     content_url: str | None = Field(default=None, max_length=2048)
@@ -36,11 +40,11 @@ class BookUpdate(SQLModel):
     """PATCH-safe update fields."""
 
     title: str | None = None
-    author: str | None = None
+    author: UserName | None = None
     description: str | None = None
     cover_url: str | None = None
     genre: str | None = None
-    language: str | None = None
+    language: Language | None = None
     age_min: int | None = None
     age_max: int | None = None
     content_url: str | None = None
@@ -64,9 +68,10 @@ class BookRead(BookBase):
     id: UUID
 
 
-class Book(TimestampMixin, BookBase, table=True):
+class Book(BookBase, TimestampMixin, table=True):
     """Catalogue entry for a book available on the platform."""
 
+    metadata = ORM_METADATA
     __tablename__ = "books"
     __table_args__ = (
         Index(
@@ -77,6 +82,7 @@ class Book(TimestampMixin, BookBase, table=True):
     )
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
+    author: UserName = Field(sa_column=Column(JSONB, nullable=False))
     categories: list[BookCategory] = Field(
         default_factory=list,
         sa_column=Column(

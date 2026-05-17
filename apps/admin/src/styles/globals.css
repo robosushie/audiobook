@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Georgia", "Times New Roman", serif;
+
+  /* Console shell (reference: care admin) */
+  --color-background: #f4f4f5;
+  --color-foreground: #18181b;
+  --color-card: #ffffff;
+  --color-card-foreground: #18181b;
+  --color-sidebar: #fafafa;
+  --color-sidebar-foreground: #3f3f46;
+  --color-sidebar-accent: #f4f4f5;
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+  --color-border: #e4e4e7;
+  --color-ring: #a1a1aa;
+
+  /* Actions */
+  --color-primary: #18181b;
+  --color-primary-foreground: #fafafa;
+
+  /* Login / brand accent */
+  --color-accent: oklch(0.68 0.19 45);
+  --color-accent-foreground: #ffffff;
+
+  --color-destructive: #dc2626;
+
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.12);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    @apply min-h-screen;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  .shadow-pop {
+    box-shadow: var(--shadow-pop);
+  }
+}

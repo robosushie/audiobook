@@ -4,6 +4,8 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlmodel import DateTime, Field, SQLModel
+
+from src.constants.model import ORM_METADATA
 from src.enums.media import AudiobookStatus
 from src.models.common import TimestampMixin
 
@@ -50,9 +52,10 @@ class AudiobookRead(AudiobookBase):
     completed_at: datetime | None
 
 
-class Audiobook(TimestampMixin, AudiobookBase, table=True):
+class Audiobook(AudiobookBase, TimestampMixin, table=True):
     """A personalised audiobook generated for a specific user."""
 
+    metadata = ORM_METADATA
     __tablename__ = "audiobooks"
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)

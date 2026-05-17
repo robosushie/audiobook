@@ -4,6 +4,8 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlmodel import Field, SQLModel
+
+from src.constants.model import ORM_METADATA
 from src.models.common import TimestampMixin
 
 
@@ -43,9 +45,10 @@ class ReviewRead(ReviewBase):
     book_id: UUID
 
 
-class Review(TimestampMixin, ReviewBase, table=True):
+class Review(ReviewBase, TimestampMixin, table=True):
     """User review and star rating for a book — one per user per book."""
 
+    metadata = ORM_METADATA
     __tablename__ = "book_reviews"
     __table_args__ = (
         UniqueConstraint("user_id", "book_id", name="uq_book_reviews_user_id_book_id"),
