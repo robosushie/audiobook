@@ -6,5 +6,5 @@ from enum import StrEnum
 class ClonerType(StrEnum):
     """TTS / voice-cloning engine used to synthesize audiobook audio."""
 
-    F5TTS = "f5tts"
+    INDICF5 = "indicf5"
     XTTSV2 = "xttsv2"

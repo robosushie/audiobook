@@ -3,7 +3,7 @@ import { LoginHeroPanel } from "@/components/auth/LoginHeroPanel";
 
 export function AuthLayout() {
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid min-h-screen bg-background lg:grid-cols-2">
       <LoginFormPanel />
       <LoginHeroPanel />
     </div>

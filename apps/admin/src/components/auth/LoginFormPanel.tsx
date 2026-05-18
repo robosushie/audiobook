@@ -24,7 +24,7 @@ export function LoginFormPanel() {
   } = useEmailOtpSignIn();
 
   return (
-    <div className="flex min-h-screen flex-col justify-center px-6 py-10 sm:px-12 lg:px-16 xl:px-24">
+    <div className="flex min-h-screen flex-col justify-center bg-background px-6 py-10 sm:px-12 lg:px-16 xl:px-24">
       <div className="mx-auto w-full max-w-md">
         <div className="mb-8 flex items-center gap-2 lg:hidden">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
@@ -36,7 +36,7 @@ export function LoginFormPanel() {
         <h1 className="text-3xl font-bold leading-tight lg:text-4xl">
           {LOGIN_HEADLINE}
           <br />
-          <span className="text-primary">{LOGIN_HEADLINE_ACCENT}</span>
+          <span className="text-accent">{LOGIN_HEADLINE_ACCENT}</span>
         </h1>
         <p className="mt-2 mb-8 text-sm text-muted-foreground lg:text-base">{LOGIN_SUBTITLE}</p>
 

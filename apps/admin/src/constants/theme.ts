@@ -2,12 +2,13 @@
 
 export const theme = {
   colors: {
-    primary: "#171717",
+    background: "#faf8f5",
+    primary: "#18181b",
     primaryForeground: "#fafafa",
-    mutedForeground: "#737373",
-    border: "#e5e5e5",
+    mutedForeground: "#71717a",
+    border: "#e8e4df",
     chart: "#404040",
-    chartMuted: "#f5f5f5",
+    chartMuted: "#f0ebe6",
   },
   layout: {
     sidebarWidth: "16rem",

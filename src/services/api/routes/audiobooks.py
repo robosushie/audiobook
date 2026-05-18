@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.enums.auth import AuthRole
 from src.enums.cloner import ClonerType
 from src.lib.cloner.cloner import create_queued_audiobook
 from src.lib.db import get_session
@@ -110,18 +109,12 @@ async def generate_audiobook_endpoint(
     session: AsyncSession = Depends(get_session),
 ) -> AudiobookRead:
     """Enqueue audiobook generation via Inngest (clone + upload)."""
-    credentials = request.state.credentials
-    if credentials.role == AuthRole.REGULAR:
-        user_result = await session.execute(select(User).where(User.auth_id == credentials.id))
-        user = user_result.scalar_one_or_none()
-        if not user:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=VOICE_USER_NOT_FOUND)
-        user_id = user.id
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provide user context via a regular user session for generation.",
-        )
+    clerk_id = request.state.credentials.id
+    user_result = await session.execute(select(User).where(User.auth_id == clerk_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=VOICE_USER_NOT_FOUND)
+    user_id = user.id
     try:
         audiobook = await create_queued_audiobook(
             GenerateAudiobookRequest(

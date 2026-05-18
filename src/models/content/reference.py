@@ -4,7 +4,6 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import String, Text
 from sqlmodel import Field, SQLModel
-
 from src.constants.model import ORM_METADATA
 from src.enums.language import Language
 from src.models.common import TimestampMixin

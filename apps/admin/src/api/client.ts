@@ -27,3 +27,24 @@ export async function apiFetch<T>(
 
   return response.json() as Promise<T>;
 }
+
+export async function apiUpload<T>(path: string, formData: FormData, token?: string): Promise<T> {
+  const apiBase = getApiBaseUrl();
+  const headers = new Headers();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${apiBase}${path}`, {
+    method: "POST",
+    body: formData,
+    headers,
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(body || `Request failed (${response.status})`);
+  }
+
+  return response.json() as Promise<T>;
+}

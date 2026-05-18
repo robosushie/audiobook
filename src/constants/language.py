@@ -14,17 +14,36 @@ class LanguageSettings:
     cloner: ClonerType
 
 
+_INDICF5_LANGUAGES: frozenset[Language] = frozenset(
+    {
+        Language.ASSAMESE,
+        Language.BENGALI,
+        Language.GUJARATI,
+        Language.HINDI,
+        Language.KANNADA,
+        Language.MALAYALAM,
+        Language.MARATHI,
+        Language.ODIYA,
+        Language.PUNJABI,
+        Language.TAMIL,
+        Language.TELUGU,
+    }
+)
+
 LANGUAGE_SETTINGS: dict[Language, LanguageSettings] = {
-    Language.ENGLISH: LanguageSettings(iso="en", cloner=ClonerType.F5TTS),
-    Language.HINDI: LanguageSettings(iso="hi", cloner=ClonerType.XTTSV2),
+    Language.ENGLISH: LanguageSettings(iso="en", cloner=ClonerType.XTTSV2),
+    Language.ASSAMESE: LanguageSettings(iso="as", cloner=ClonerType.INDICF5),
+    Language.BENGALI: LanguageSettings(iso="bn", cloner=ClonerType.INDICF5),
+    Language.GUJARATI: LanguageSettings(iso="gu", cloner=ClonerType.INDICF5),
+    Language.HINDI: LanguageSettings(iso="hi", cloner=ClonerType.INDICF5),
     Language.ARABIC: LanguageSettings(iso="ar", cloner=ClonerType.XTTSV2),
-    Language.KANNADA: LanguageSettings(iso="kn", cloner=ClonerType.XTTSV2),
-    Language.MALAYALAM: LanguageSettings(iso="ml", cloner=ClonerType.XTTSV2),
-    Language.MARATHI: LanguageSettings(iso="mr", cloner=ClonerType.XTTSV2),
-    Language.ODIYA: LanguageSettings(iso="or", cloner=ClonerType.XTTSV2),
-    Language.PUNJABI: LanguageSettings(iso="pa", cloner=ClonerType.XTTSV2),
-    Language.TAMIL: LanguageSettings(iso="ta", cloner=ClonerType.XTTSV2),
-    Language.TELUGU: LanguageSettings(iso="te", cloner=ClonerType.XTTSV2),
+    Language.KANNADA: LanguageSettings(iso="kn", cloner=ClonerType.INDICF5),
+    Language.MALAYALAM: LanguageSettings(iso="ml", cloner=ClonerType.INDICF5),
+    Language.MARATHI: LanguageSettings(iso="mr", cloner=ClonerType.INDICF5),
+    Language.ODIYA: LanguageSettings(iso="or", cloner=ClonerType.INDICF5),
+    Language.PUNJABI: LanguageSettings(iso="pa", cloner=ClonerType.INDICF5),
+    Language.TAMIL: LanguageSettings(iso="ta", cloner=ClonerType.INDICF5),
+    Language.TELUGU: LanguageSettings(iso="te", cloner=ClonerType.INDICF5),
 }
 
 _DEFAULT = LanguageSettings(iso="en", cloner=ClonerType.XTTSV2)
@@ -43,3 +62,8 @@ def language_to_iso(language: Language) -> str:
 def cloner_for_language(language: Language) -> ClonerType:
     """Default cloning backend for a catalogue / voice language."""
     return get_language_settings(language).cloner
+
+
+def uses_indicf5(language: Language) -> bool:
+    """Whether synthesis should use IndicF5 for this language."""
+    return language in _INDICF5_LANGUAGES

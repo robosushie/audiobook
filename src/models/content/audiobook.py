@@ -62,6 +62,6 @@ class Audiobook(AudiobookBase, TimestampMixin, table=True):
 
     user_id: UUID = Field(foreign_key="users.id", index=True)
     book_id: UUID = Field(foreign_key="books.id", index=True)
-    voice_profile_id: UUID = Field(foreign_key="voice_profiles.id", index=True)
+    voice_profile_id: UUID = Field(foreign_key="voice.id", index=True)
 
     completed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))

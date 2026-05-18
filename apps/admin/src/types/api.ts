@@ -23,14 +23,54 @@ export type UserUpdateBody = {
   verified?: boolean;
 };
 
+export type ReferenceLanguage =
+  | "english"
+  | "assamese"
+  | "bengali"
+  | "gujarati"
+  | "hindi"
+  | "arabic"
+  | "kannada"
+  | "malayalam"
+  | "marathi"
+  | "odia"
+  | "punjabi"
+  | "tamil"
+  | "telugu";
+
+export type BookGenre =
+  | "adventure"
+  | "fairytale"
+  | "mythical"
+  | "fantasy"
+  | "science_fiction"
+  | "mystery"
+  | "horror"
+  | "biography"
+  | "history"
+  | "religion"
+  | "other";
+
+export type BookUpdateBody = {
+  title?: string;
+  author?: UserName;
+  description?: string | null;
+  cover_url?: string | null;
+  genre?: BookGenre | null;
+  language?: ReferenceLanguage;
+  is_active?: boolean;
+  is_trending?: boolean;
+};
+
 export type BookRow = {
   id: string;
   title: string;
   author: UserName;
   description?: string | null;
   cover_url?: string | null;
-  genre?: string | null;
-  language: string;
+  genre?: BookGenre | string | null;
+  language: ReferenceLanguage;
+  content_url?: string | null;
   is_active: boolean;
   is_trending: boolean;
   categories: string[];
@@ -47,18 +87,6 @@ export type DailyAudiobookCount = {
   count: number;
 };
 
-export type ReferenceLanguage =
-  | "english"
-  | "hindi"
-  | "arabic"
-  | "kannada"
-  | "malayalam"
-  | "marathi"
-  | "odia"
-  | "punjabi"
-  | "tamil"
-  | "telugu";
-
 export type ReferenceRow = {
   id: string;
   language: ReferenceLanguage;
@@ -73,6 +101,41 @@ export type ReferenceCreateBody = {
 export type ReferenceUpdateBody = {
   language?: ReferenceLanguage;
   text?: string;
+};
+
+export type VoiceProfileStatus =
+  | "uploaded"
+  | "queued"
+  | "processing"
+  | "ready"
+  | "failed";
+
+export type VoiceProfileRow = {
+  id: string;
+  user_id: string;
+  reference_id: string;
+  label: string;
+  raw_text: string;
+  duration: number;
+  status: VoiceProfileStatus;
+  language: ReferenceLanguage;
+  audio_url?: string | null;
+};
+
+export type AudiobookGenerateBody = {
+  book_id: string;
+  voice_profile_id: string;
+  cloner_type?: "indicf5" | "xttsv2" | null;
+};
+
+export type AudiobookRow = {
+  id: string;
+  user_id: string;
+  book_id: string;
+  voice_profile_id: string;
+  status: string;
+  content_url?: string | null;
+  duration?: number | null;
 };
 
 export type DashboardOverview = {

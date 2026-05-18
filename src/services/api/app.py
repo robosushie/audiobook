@@ -1,7 +1,6 @@
 """REST API entry point (routes only; Inngest workers live in ``services.event.app``)."""
 
 from fastapi import Depends
-
 from src.enums.auth import AuthRole
 from src.lib.auth.clerk import create_authorization
 from src.lib.fastapi.server import create_server

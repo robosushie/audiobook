@@ -2,6 +2,7 @@ import { SignOutButton, useUser } from "@clerk/react";
 import {
   BookOpen,
   FileText,
+  FlaskConical,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { to: ROUTES.users, label: "Users", icon: Users },
   { to: ROUTES.books, label: "Books", icon: BookOpen },
   { to: ROUTES.reference, label: "Reference", icon: FileText },
+  { to: ROUTES.simulate, label: "Simulate", icon: FlaskConical },
   { to: ROUTES.settings, label: "Settings", icon: Settings },
 ] as const;
 

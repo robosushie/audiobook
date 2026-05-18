@@ -28,6 +28,7 @@ from src.lib.module.storage.supabase import (
 from src.lib.voice.audio import (
     audio_to_wav_bytes,
     load_audio_from_bytes,
+    normalize_upload_to_wav_bytes,
     preprocess_for_storage,
     select_best_clip,
 )
@@ -102,7 +103,8 @@ async def create_queued_voice_profile(
 
     profile_id = uuid4()
     raw_path = raw_voice_object_path(user_id, profile_id)
-    raw_url = upload_voice(raw_path, voice_data, content_type="audio/wav")
+    wav_bytes = normalize_upload_to_wav_bytes(voice_data)
+    raw_url = upload_voice(raw_path, wav_bytes, content_type="audio/wav")
 
     profile = Voice(
         id=profile_id,

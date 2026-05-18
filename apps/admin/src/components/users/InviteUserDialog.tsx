@@ -4,6 +4,7 @@ import { useState } from "react";
 import { inviteUser } from "@/api/users";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { useApi } from "@/hooks/useApi";
 
 type InviteUserDialogProps = {
@@ -21,6 +22,13 @@ export function InviteUserDialog({ role, label, onSuccess }: InviteUserDialogPro
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  function resetForm() {
+    setEmail("");
+    setFirstName("");
+    setLastName("");
+    setError(null);
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
@@ -33,9 +41,7 @@ export function InviteUserDialog({ role, label, onSuccess }: InviteUserDialogPro
         role,
       });
       setOpen(false);
-      setEmail("");
-      setFirstName("");
-      setLastName("");
+      resetForm();
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to invite user");
@@ -54,45 +60,56 @@ export function InviteUserDialog({ role, label, onSuccess }: InviteUserDialogPro
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg">
-        <h2 className="text-lg font-semibold">{label}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Creates the user in Clerk and syncs to the database.
-        </p>
-        <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+    <Modal
+      open={open}
+      onClose={() => {
+        setOpen(false);
+        resetForm();
+      }}
+      title={label}
+      description="Creates the user in Clerk and syncs to the database."
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+              resetForm();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form="invite-user-form" disabled={loading}>
+            {loading ? "Saving…" : "Save"}
+          </Button>
+        </>
+      }
+    >
+      <form id="invite-user-form" className="space-y-3" onSubmit={handleSubmit}>
+        <Input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <div className="grid grid-cols-2 gap-3">
           <Input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="First name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
             required
           />
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              placeholder="First name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-            />
-            <Input
-              placeholder="Last name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-            />
-          </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving…" : "Save"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+          <Input
+            placeholder="Last name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </div>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </form>
+    </Modal>
   );
 }

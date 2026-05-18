@@ -4,11 +4,12 @@ import inngest
 from src.lib.cloner.cloner import mark_audiobook_failed, run_audiobook_generation_job
 from src.lib.schemas.events import AudiobookGenerateEventData
 from src.services.event.client import inngest_client
+from src.services.event.context import trigger_event_data
 from src.services.event.events import AUDIOBOOK_GENERATE_REQUESTED
 
 
 async def _on_audiobook_generate_failure(ctx: inngest.Context) -> None:
-    data = AudiobookGenerateEventData.model_validate(ctx.event.data)
+    data = AudiobookGenerateEventData.model_validate(trigger_event_data(ctx))
     await mark_audiobook_failed(data.audiobook_id)
 
 
@@ -21,7 +22,7 @@ async def _on_audiobook_generate_failure(ctx: inngest.Context) -> None:
 )
 async def audiobook_generate(ctx: inngest.Context) -> dict[str, str]:
     """Clone book text with a voice profile and upload to storage."""
-    data = AudiobookGenerateEventData.model_validate(ctx.event.data)
+    data = AudiobookGenerateEventData.model_validate(trigger_event_data(ctx))
     ctx.logger.info("audiobook generate started audiobook_id=%s", data.audiobook_id)
 
     async def _run() -> dict[str, str]:

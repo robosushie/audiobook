@@ -1,8 +1,8 @@
 """Initial Migration
 
-Revision ID: 633160a98f84
+Revision ID: 36bd3ef64d20
 Revises: 
-Create Date: 2026-05-17 15:40:30.538641
+Create Date: 2026-05-17 18:16:33.518151
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '633160a98f84'
+revision: str = '36bd3ef64d20'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -84,7 +84,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_book_reviews_book_id'), 'book_reviews', ['book_id'], unique=False)
     op.create_index(op.f('ix_book_reviews_user_id'), 'book_reviews', ['user_id'], unique=False)
-    op.create_table('voice_profiles',
+    op.create_table('voice',
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('label', sqlmodel.sql.sqltypes.AutoString(length=128), nullable=False),
@@ -97,12 +97,12 @@ def upgrade() -> None:
     sa.Column('audio_url', sqlmodel.sql.sqltypes.AutoString(length=2048), nullable=True),
     sa.Column('audio_text', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('status', sa.Enum('UPLOADED', 'QUEUED', 'PROCESSING', 'READY', 'FAILED', name='voiceprofilestatus'), nullable=False),
-    sa.ForeignKeyConstraint(['reference_id'], ['reference.id'], name=op.f('fk_voice_profiles_reference_id_reference')),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_voice_profiles_user_id_users')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_voice_profiles'))
+    sa.ForeignKeyConstraint(['reference_id'], ['reference.id'], name=op.f('fk_voice_reference_id_reference')),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_voice_user_id_users')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_voice'))
     )
-    op.create_index(op.f('ix_voice_profiles_reference_id'), 'voice_profiles', ['reference_id'], unique=False)
-    op.create_index(op.f('ix_voice_profiles_user_id'), 'voice_profiles', ['user_id'], unique=False)
+    op.create_index(op.f('ix_voice_reference_id'), 'voice', ['reference_id'], unique=False)
+    op.create_index(op.f('ix_voice_user_id'), 'voice', ['user_id'], unique=False)
     op.create_table('audiobooks',
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -116,7 +116,7 @@ def upgrade() -> None:
     sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['book_id'], ['books.id'], name=op.f('fk_audiobooks_book_id_books')),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_audiobooks_user_id_users')),
-    sa.ForeignKeyConstraint(['voice_profile_id'], ['voice_profiles.id'], name=op.f('fk_audiobooks_voice_profile_id_voice_profiles')),
+    sa.ForeignKeyConstraint(['voice_profile_id'], ['voice.id'], name=op.f('fk_audiobooks_voice_profile_id_voice')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_audiobooks'))
     )
     op.create_index(op.f('ix_audiobooks_book_id'), 'audiobooks', ['book_id'], unique=False)
@@ -147,9 +147,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_audiobooks_user_id'), table_name='audiobooks')
     op.drop_index(op.f('ix_audiobooks_book_id'), table_name='audiobooks')
     op.drop_table('audiobooks')
-    op.drop_index(op.f('ix_voice_profiles_user_id'), table_name='voice_profiles')
-    op.drop_index(op.f('ix_voice_profiles_reference_id'), table_name='voice_profiles')
-    op.drop_table('voice_profiles')
+    op.drop_index(op.f('ix_voice_user_id'), table_name='voice')
+    op.drop_index(op.f('ix_voice_reference_id'), table_name='voice')
+    op.drop_table('voice')
     op.drop_index(op.f('ix_book_reviews_user_id'), table_name='book_reviews')
     op.drop_index(op.f('ix_book_reviews_book_id'), table_name='book_reviews')
     op.drop_table('book_reviews')

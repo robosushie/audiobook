@@ -7,15 +7,12 @@ from uuid import UUID
 import inngest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.constants.language import cloner_for_language
 from src.enums.cloner import ClonerType
 from src.enums.language import Language
 from src.enums.media import AudiobookStatus, VoiceProfileStatus
 from src.lib.cloner.base import VoiceCloner
-from src.lib.cloner.fetch import fetch_text
-from src.lib.module.inngest.db import job_session
-from src.lib.schemas.cloner import CloneRequest, CloneResult, GenerateAudiobookRequest
+from src.lib.module.storage.supabase import download_book_content
 from src.lib.error import (
     BOOK_CONTENT_URL_MISSING,
     BOOK_NOT_FOUND,
@@ -23,11 +20,13 @@ from src.lib.error import (
     VOICE_AUDIO_NOT_READY,
     VOICE_PROFILE_NOT_FOUND,
 )
+from src.lib.module.inngest.db import job_session
 from src.lib.module.storage.supabase import (
     audiobook_object_path,
     download_voice,
     upload_audiobook,
 )
+from src.lib.schemas.cloner import CloneRequest, CloneResult, GenerateAudiobookRequest
 from src.models.content.audiobook import Audiobook
 from src.models.content.book import Book
 from src.models.content.reference import Reference
@@ -41,10 +40,10 @@ def create_cloner(cloner_type: ClonerType) -> VoiceCloner:
     if cloner_type in _CLONERS:
         return _CLONERS[cloner_type]
 
-    if cloner_type is ClonerType.F5TTS:
-        from src.lib.cloner.f5tts.cloner import F5TTSCloner
+    if cloner_type is ClonerType.INDICF5:
+        from src.lib.cloner.indicf5.cloner import IndicF5Cloner
 
-        cloner: VoiceCloner = F5TTSCloner()
+        cloner: VoiceCloner = IndicF5Cloner()
     elif cloner_type is ClonerType.XTTSV2:
         from src.lib.cloner.xttsv2.cloner import XTTSV2Cloner
 
@@ -64,7 +63,9 @@ def resolve_cloner_type(
     return override if override is not None else cloner_for_language(language)
 
 
-def clone_speech(request: CloneRequest, *, cloner_type: ClonerType | None = None) -> CloneResult:
+def clone_speech(
+    request: CloneRequest, *, cloner_type: ClonerType | None = None
+) -> CloneResult:
     """Run voice cloning and return synthesized audio."""
     backend = resolve_cloner_type(request.language, cloner_type)
     return create_cloner(backend).clone(request)
@@ -88,7 +89,7 @@ def _generate_audiobook_sync(
         raise ValueError(BOOK_CONTENT_URL_MISSING)
 
     reference_audio = download_voice(voice.user_id, voice.id)
-    book_text = fetch_text(book.content_url).strip()
+    book_text = download_book_content(book.id).decode("utf-8").strip()
     if not book_text:
         raise ValueError(BOOK_CONTENT_URL_MISSING)
 
@@ -153,7 +154,9 @@ async def run_audiobook_generation_job(
 ) -> Audiobook:
     """Clone and upload for a queued audiobook (Inngest worker)."""
     async with job_session() as session:
-        result = await session.execute(select(Audiobook).where(Audiobook.id == audiobook_id))
+        result = await session.execute(
+            select(Audiobook).where(Audiobook.id == audiobook_id)
+        )
         audiobook = result.scalar_one_or_none()
         if not audiobook:
             raise inngest.NonRetriableError("Audiobook not found")
@@ -171,7 +174,9 @@ async def run_audiobook_generation_job(
             raise inngest.NonRetriableError(VOICE_PROFILE_NOT_FOUND)
         voice, reference = voice_row[0], voice_row[1]
 
-        book_result = await session.execute(select(Book).where(Book.id == audiobook.book_id))
+        book_result = await session.execute(
+            select(Book).where(Book.id == audiobook.book_id)
+        )
         book = book_result.scalar_one_or_none()
         if not book:
             raise inngest.NonRetriableError(BOOK_NOT_FOUND)
@@ -205,7 +210,9 @@ async def run_audiobook_generation_job(
 async def mark_audiobook_failed(audiobook_id: UUID) -> None:
     """Mark audiobook FAILED after exhausted retries."""
     async with job_session() as session:
-        result = await session.execute(select(Audiobook).where(Audiobook.id == audiobook_id))
+        result = await session.execute(
+            select(Audiobook).where(Audiobook.id == audiobook_id)
+        )
         audiobook = result.scalar_one_or_none()
         if audiobook is None:
             return

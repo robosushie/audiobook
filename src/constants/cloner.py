@@ -1,10 +1,12 @@
 """Cloner engine model identifiers."""
 
-F5_MODEL_CLS = "DiT"
-F5_CKPT_URI = "hf://SWivid/F5-TTS/F5TTS_Base/model_1200000.safetensors"
-F5_VOCAB_URI = "hf://SWivid/F5-TTS/F5TTS_Base/vocab.txt"
-F5_VOCODER_NAME = "vocos"
-F5_MEL_SPEC_TYPE = "vocos"
-F5_ODE_METHOD = "euler"
+INDICF5_REPO = "ai4bharat/IndicF5"
+INDICF5_CKPT_FILENAME = "model.safetensors"
+INDICF5_VOCAB_FILENAME = "checkpoints/vocab.txt"
+
+INDICF5_VOCODER_NAME = "vocos"
+INDICF5_VOCODER_REPO = "charactr/vocos-mel-24khz"
+INDICF5_MEL_SPEC_TYPE = "vocos"
+INDICF5_ODE_METHOD = "euler"
 
 XTTS_MODEL_ID = "tts_models/multilingual/multi-dataset/xtts_v2"

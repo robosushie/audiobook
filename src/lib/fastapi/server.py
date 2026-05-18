@@ -3,7 +3,6 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-
 from src.lib.fastapi.routes.health import router as health_router
 from src.lib.fastapi.templates.scalar import DOCS_TEMPLATE
 from src.lib.schemas.fastapi import Middleware, Server

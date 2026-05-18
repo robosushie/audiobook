@@ -2,6 +2,9 @@ import type { ReferenceLanguage } from "@/types/api";
 
 export const REFERENCE_LANGUAGES: { value: ReferenceLanguage; label: string }[] = [
   { value: "english", label: "English" },
+  { value: "assamese", label: "Assamese" },
+  { value: "bengali", label: "Bengali" },
+  { value: "gujarati", label: "Gujarati" },
   { value: "hindi", label: "Hindi" },
   { value: "arabic", label: "Arabic" },
   { value: "kannada", label: "Kannada" },

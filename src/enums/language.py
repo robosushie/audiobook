@@ -7,6 +7,9 @@ class Language(StrEnum):
     """BCP-style slug values for API and storage."""
 
     ENGLISH = "english"
+    ASSAMESE = "assamese"
+    BENGALI = "bengali"
+    GUJARATI = "gujarati"
     HINDI = "hindi"
     ARABIC = "arabic"
     KANNADA = "kannada"

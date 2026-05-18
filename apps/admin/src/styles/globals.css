@@ -4,17 +4,17 @@
   --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-display: "Georgia", "Times New Roman", serif;
 
-  /* Console shell (reference: care admin) */
-  --color-background: #f4f4f5;
+  /* App shell — warm off-white */
+  --color-background: #faf8f5;
   --color-foreground: #18181b;
   --color-card: #ffffff;
   --color-card-foreground: #18181b;
-  --color-sidebar: #fafafa;
+  --color-sidebar: #faf8f5;
   --color-sidebar-foreground: #3f3f46;
-  --color-sidebar-accent: #f4f4f5;
-  --color-muted: #f4f4f5;
+  --color-sidebar-accent: #f0ebe6;
+  --color-muted: #f0ebe6;
   --color-muted-foreground: #71717a;
-  --color-border: #e4e4e7;
+  --color-border: #e8e4df;
   --color-ring: #a1a1aa;
 
   /* Actions */
@@ -24,6 +24,10 @@
   /* Login / brand accent */
   --color-accent: oklch(0.68 0.19 45);
   --color-accent-foreground: #ffffff;
+
+  /* Login hero gradient */
+  --color-login-hero-top: #f8e0d8;
+  --color-login-hero-mid: #f9f1ec;
 
   --color-destructive: #dc2626;
 

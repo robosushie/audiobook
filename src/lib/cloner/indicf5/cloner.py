@@ -1,20 +1,19 @@
-"""F5-TTS voice cloning (English and IndicF5 checkpoint)."""
+"""IndicF5 voice cloning (ai4bharat/IndicF5 weights via f5_tts inference stack)."""
 
 import tempfile
 from pathlib import Path
 
+import numpy as np
+import soundfile as sf
 import torch
-import torchaudio
 
 from src.constants.cloner import (
-    F5_CKPT_URI,
-    F5_MEL_SPEC_TYPE,
-    F5_MODEL_CLS,
-    F5_ODE_METHOD,
-    F5_VOCAB_URI,
-    F5_VOCODER_NAME,
+    INDICF5_MEL_SPEC_TYPE,
+    INDICF5_ODE_METHOD,
+    INDICF5_VOCODER_NAME,
 )
 from src.constants.language import language_to_iso
+from src.lib.cloner.assets import get_cloner_asset_paths
 from src.lib.cloner.base import VoiceCloner
 from src.lib.error import CLONE_SYNTHESIS_FAILED
 from src.lib.schemas.cloner import CloneRequest, CloneResult
@@ -22,6 +21,15 @@ from src.lib.schemas.cloner import CloneRequest, CloneResult
 _MODEL = None
 _VOCODER = None
 _DEVICE: str | None = None
+
+_INDICF5_MODEL_CFG = {
+    "dim": 1024,
+    "depth": 22,
+    "heads": 16,
+    "ff_mult": 2,
+    "text_dim": 512,
+    "conv_layers": 4,
+}
 
 
 def _device() -> str:
@@ -36,27 +44,33 @@ def _load_models() -> tuple[object, object]:
     if _MODEL is not None and _VOCODER is not None:
         return _MODEL, _VOCODER
 
-    from cached_path import cached_path
-    from f5_tts.infer.utils_infer import load_model, load_vocoder
+    from f5_tts.infer.utils_infer import load_checkpoint, load_model, load_vocoder
+    from f5_tts.model import DiT
 
+    assets = get_cloner_asset_paths()
     device = _device()
-    ckpt_file = str(cached_path(F5_CKPT_URI))
-    vocab_file = str(cached_path(F5_VOCAB_URI))
-    _MODEL = load_model(
-        model_cls=F5_MODEL_CLS,
-        model_cfg=dict(dim=1024, depth=22, heads=16, ff_mult=2, text_dim=512, conv_layers=4),
-        ckpt_path=ckpt_file,
-        vocab_file=vocab_file,
-        ode_method=F5_ODE_METHOD,
+
+    model = load_model(
+        model_cls=DiT,
+        model_cfg=_INDICF5_MODEL_CFG,
+        mel_spec_type=INDICF5_MEL_SPEC_TYPE,
+        vocab_file=str(assets.indicf5_vocab),
+        ode_method=INDICF5_ODE_METHOD,
         use_ema=True,
         device=device,
     )
-    _VOCODER = load_vocoder(vocoder_name=F5_VOCODER_NAME, is_local=False, local_path="")
+    _MODEL = load_checkpoint(model, str(assets.indicf5_ckpt), device, use_ema=True)
+    _VOCODER = load_vocoder(
+        vocoder_name=INDICF5_VOCODER_NAME,
+        is_local=True,
+        local_path=str(assets.indicf5_vocos_dir),
+        device=device,
+    )
     return _MODEL, _VOCODER
 
 
-class F5TTSCloner(VoiceCloner):
-    """Synthesize speech with SWivid F5-TTS (IndicF5-compatible checkpoint)."""
+class IndicF5Cloner(VoiceCloner):
+    """Synthesize speech with IndicF5 (ai4bharat/IndicF5 checkpoint)."""
 
     def clone(self, request: CloneRequest) -> CloneResult:
         from f5_tts.infer.utils_infer import infer_process
@@ -73,21 +87,25 @@ class F5TTSCloner(VoiceCloner):
                     gen_text=request.source_text,
                     model_obj=model,
                     vocoder=vocoder,
-                    mel_spec_type=F5_MEL_SPEC_TYPE,
+                    mel_spec_type=INDICF5_MEL_SPEC_TYPE,
                     device=_device(),
                 )
             except Exception as exc:
                 raise RuntimeError(
                     CLONE_SYNTHESIS_FAILED.format(
-                        cloner="f5tts",
+                        cloner="indicf5",
                         language=language_to_iso(request.language),
                         error=exc,
                     ),
                 ) from exc
 
+            if not isinstance(wav, np.ndarray):
+                wav = np.asarray(wav, dtype=np.float32)
+            wav = np.squeeze(wav).astype(np.float32, copy=False)
+
             out_path = Path(tmp_dir) / "output.wav"
-            torchaudio.save(str(out_path), wav, sr)
+            sf.write(str(out_path), wav, sr)
             audio_bytes = out_path.read_bytes()
 
-        duration = float(wav.shape[1] / sr)
+        duration = float(len(wav) / sr)
         return CloneResult(audio_bytes=audio_bytes, duration=duration)

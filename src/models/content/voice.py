@@ -3,7 +3,6 @@
 from uuid import UUID, uuid4
 
 from sqlmodel import Field, SQLModel
-
 from src.constants.model import ORM_METADATA
 from src.enums.media import VoiceProfileStatus
 from src.models.common import TimestampMixin
@@ -59,7 +58,7 @@ class Voice(VoiceBase, TimestampMixin, table=True):
     """User-recorded voice clip linked to a shared reference passage."""
 
     metadata = ORM_METADATA
-    __tablename__ = "voice_profiles"
+    __tablename__ = "voice"
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
 

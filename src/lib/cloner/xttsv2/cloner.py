@@ -1,5 +1,6 @@
 """Coqui XTTS v2 multilingual voice cloning."""
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -7,6 +8,7 @@ import librosa
 
 from src.constants.cloner import XTTS_MODEL_ID
 from src.constants.language import language_to_iso
+from src.lib.cloner.assets import get_cloner_asset_paths
 from src.lib.cloner.base import VoiceCloner
 from src.lib.error import CLONE_SYNTHESIS_FAILED
 from src.lib.schemas.cloner import CloneRequest, CloneResult
@@ -14,21 +16,28 @@ from src.lib.schemas.cloner import CloneRequest, CloneResult
 _TTS = None
 
 
-def _patch_coqui_torch_load() -> None:
-    """Allow Coqui checkpoints under PyTorch 2.6+ weights-only default."""
-    from TTS.utils import io
+def _patch_xtts_load_audio() -> None:
+    """Load reference WAV with soundfile (avoids torchcodec/torchaudio on PyTorch 2.9+)."""
+    import torch
+    import soundfile as sf
+    import torchaudio.functional
+    from TTS.tts.models import xtts as xtts_module
 
-    if getattr(io.load_fsspec, "_audiobook_patched", False):
+    if getattr(xtts_module, "_audiobook_patched", False):
         return
 
-    original_load = io.load_fsspec
+    def load_audio(audiopath: str, sampling_rate: int) -> torch.Tensor:
+        data, lsr = sf.read(audiopath, dtype="float32", always_2d=True)
+        audio = torch.from_numpy(data.T)
+        if audio.size(0) != 1:
+            audio = torch.mean(audio, dim=0, keepdim=True)
+        if lsr != sampling_rate:
+            audio = torchaudio.functional.resample(audio, lsr, sampling_rate)
+        audio.clip_(-1, 1)
+        return audio
 
-    def patched_load(path, map_location=None, **kwargs):
-        kwargs["weights_only"] = False
-        return original_load(path, map_location, **kwargs)
-
-    patched_load._audiobook_patched = True  # type: ignore[attr-defined]
-    io.load_fsspec = patched_load
+    xtts_module.load_audio = load_audio
+    xtts_module._audiobook_patched = True  # type: ignore[attr-defined]
 
 
 def _load_tts():
@@ -36,10 +45,14 @@ def _load_tts():
     if _TTS is not None:
         return _TTS
 
+    _patch_xtts_load_audio()
+
     import torch
     from TTS.api import TTS
 
-    _patch_coqui_torch_load()
+    assets = get_cloner_asset_paths()
+    os.environ["TTS_HOME"] = str(assets.xtts_home)
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     _TTS = TTS(XTTS_MODEL_ID).to(device)
     return _TTS

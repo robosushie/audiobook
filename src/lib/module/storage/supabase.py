@@ -13,6 +13,7 @@ load_dotenv(find_dotenv(usecwd=True))
 
 VOICE_BUCKET = os.environ["VOICE_BUCKET"]
 AUDIOBOOK_BUCKET = os.environ["AUDIOBOOK_BUCKET"]
+BOOK_BUCKET = os.environ["BOOK_BUCKET"]
 
 
 @lru_cache(maxsize=1)
@@ -38,6 +39,11 @@ def audiobook_object_path(user_id: UUID, audiobook_id: UUID) -> str:
     return f"{user_id}/{audiobook_id}.wav"
 
 
+def book_content_object_path(book_id: UUID) -> str:
+    """Object key for book manuscript text in BOOK_BUCKET."""
+    return f"{book_id}/content.txt"
+
+
 def download_bytes(bucket: str, object_path: str) -> bytes:
     """Download an object from Supabase Storage."""
     client = get_supabase_client()
@@ -57,6 +63,11 @@ def download_raw_voice(user_id: UUID, voice_profile_id: UUID) -> bytes:
 def download_voice(user_id: UUID, voice_profile_id: UUID) -> bytes:
     """Download preprocessed reference audio from VOICE_BUCKET."""
     return download_bytes(VOICE_BUCKET, voice_object_path(user_id, voice_profile_id))
+
+
+def download_book_content(book_id: UUID) -> bytes:
+    """Download manuscript text from BOOK_BUCKET (works for private buckets)."""
+    return download_bytes(BOOK_BUCKET, book_content_object_path(book_id))
 
 
 def delete_object(bucket: str, object_path: str) -> None:
@@ -105,3 +116,13 @@ def upload_audiobook(
 ) -> str:
     """Upload a generated audiobook to AUDIOBOOK_BUCKET."""
     return upload_bytes(AUDIOBOOK_BUCKET, object_path, data, content_type=content_type)
+
+
+def upload_book_content(book_id: UUID, data: bytes) -> str:
+    """Upload book manuscript text to BOOK_BUCKET."""
+    return upload_bytes(
+        BOOK_BUCKET,
+        book_content_object_path(book_id),
+        data,
+        content_type="text/plain; charset=utf-8",
+    )
