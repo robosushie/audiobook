@@ -33,5 +33,10 @@
     --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.12);
     --login-hero-top: 18 52% 91%;
     --login-hero-mid: 24 40% 95%;
+    --tag-blue: 214 72% 58%;
+    --tag-purple: 270 55% 58%;
+    --tag-pink: 340 65% 58%;
+    --tag-green: 152 45% 42%;
+    --tag-yellow: 42 92% 55%;
   }
 }

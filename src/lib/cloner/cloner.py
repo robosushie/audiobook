@@ -20,6 +20,7 @@ from src.lib.error import (
     VOICE_AUDIO_NOT_READY,
     VOICE_PROFILE_NOT_FOUND,
 )
+from src.lib.feature.sse.notify import publish_audiobook_row
 from src.lib.module.inngest.db import job_session
 from src.lib.module.storage.supabase import (
     audiobook_object_path,
@@ -183,6 +184,7 @@ async def run_audiobook_generation_job(
 
         audiobook.status = AudiobookStatus.PROCESSING
         await session.flush()
+        await publish_audiobook_row(audiobook, book_title=book.title, book_cover_url=book.cover_url, event_type="audiobook.updated")
 
         try:
             content_url, duration = await asyncio.to_thread(
@@ -204,6 +206,7 @@ async def run_audiobook_generation_job(
 
         await session.flush()
         await session.refresh(audiobook)
+        await publish_audiobook_row(audiobook, book_title=book.title, book_cover_url=book.cover_url, event_type="audiobook.updated")
         return audiobook
 
 
@@ -218,3 +221,13 @@ async def mark_audiobook_failed(audiobook_id: UUID) -> None:
             return
         audiobook.status = AudiobookStatus.FAILED
         await session.flush()
+        book_result = await session.execute(select(Book.title, Book.cover_url).where(Book.id == audiobook.book_id))
+        book_row = book_result.first()
+        book_title = book_row[0] if book_row else None
+        book_cover_url = book_row[1] if book_row else None
+        await publish_audiobook_row(
+            audiobook,
+            book_title=book_title,
+            book_cover_url=book_cover_url,
+            event_type="audiobook.updated",
+        )

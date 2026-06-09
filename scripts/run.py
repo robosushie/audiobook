@@ -243,34 +243,38 @@ def cmd_service_api(args: list[str]) -> None:
 
     Injects root .env so the API uses the same config as web/mobile.
     """
+    env = load_env_optional()
+    env.setdefault("INTERNAL_SSE_SECRET", "dev-sse-secret")
     run(
         [
             str(VENV_BIN / "uvicorn"),
             "src.services.api.app:app",
-            "--reload",
             "--host",
             "0.0.0.0",
             "--port",
             str(API_PORT),
         ],
-        extra_env=load_env_optional(),
+        extra_env=env,
     )
 
 
 def cmd_service_event(args: list[str]) -> None:
     """Start the event service (health + Inngest function serve on /api/inngest)."""
+    env = load_env_optional()
+    env.setdefault("SSE_FORWARD_TO_API", "1")
+    env.setdefault("API_BASE_URL", f"http://127.0.0.1:{API_PORT}")
+    env.setdefault("INTERNAL_SSE_SECRET", "dev-sse-secret")
     run(
         [
             str(VENV_BIN / "uvicorn"),
             "src.services.event.app:app",
-            "--reload",
             "--host",
             "0.0.0.0",
             "--port",
             str(EVENT_PORT),
             *args,
         ],
-        extra_env=load_env_optional(),
+        extra_env=env,
     )
 
 

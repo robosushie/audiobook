@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { ROUTES } from "@/constants/routes";
+import { AudiobooksPage } from "@/pages/AudiobooksPage";
 import { BooksPage } from "@/pages/BooksPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -27,6 +28,7 @@ export default function App() {
         <Route path={ROUTES.dashboard} element={<DashboardPage />} />
         <Route path={ROUTES.users} element={<UsersPage />} />
         <Route path={ROUTES.books} element={<BooksPage />} />
+        <Route path={ROUTES.audiobooks} element={<AudiobooksPage />} />
         <Route path={ROUTES.reference} element={<ReferencePage />} />
         <Route path={ROUTES.simulate} element={<SimulatePage />} />
         <Route path={ROUTES.simulateVoice} element={<SimulateVoicePage />} />

@@ -17,6 +17,7 @@ from src.lib.error import (
     VOICE_PROFILE_NOT_FOUND,
 )
 from src.lib.feature.reference.passages import get_or_create_reference
+from src.lib.feature.sse.notify import publish_voice_row
 from src.lib.module.inngest.db import job_session
 from src.lib.module.storage.supabase import (
     delete_raw_voice,
@@ -149,6 +150,7 @@ async def run_voice_preprocess_job(profile_id: UUID) -> Voice:
 
         profile.status = VoiceProfileStatus.PROCESSING
         await session.flush()
+        await publish_voice_row(profile, reference.language, "voice.updated")
 
         reference_text = (profile.raw_text or reference.text).strip()
         if not reference_text:
@@ -174,6 +176,7 @@ async def run_voice_preprocess_job(profile_id: UUID) -> Voice:
 
         await session.flush()
         await session.refresh(profile)
+        await publish_voice_row(profile, reference.language, "voice.updated")
         return profile
 
 
@@ -186,3 +189,8 @@ async def mark_voice_profile_failed(profile_id: UUID) -> None:
             return
         profile.status = VoiceProfileStatus.FAILED
         await session.flush()
+        ref = await session.execute(
+            select(Reference.language).where(Reference.id == profile.reference_id),
+        )
+        language = ref.scalar_one_or_none()
+        await publish_voice_row(profile, language or Language.ENGLISH, "voice.updated")

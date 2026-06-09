@@ -10,17 +10,21 @@ import { Pressable, View } from 'react-native';
 type OtpVerifyFormProps = {
   email: string;
   isLoading: boolean;
+  autoFocus?: boolean;
   onSubmit: (code: string) => void;
   onResend: () => void;
   onChangeEmail: () => void;
+  onFocus?: () => void;
 };
 
 export function OtpVerifyForm({
   email,
   isLoading,
+  autoFocus,
   onSubmit,
   onResend,
   onChangeEmail,
+  onFocus,
 }: OtpVerifyFormProps) {
   const [code, setCode] = React.useState('');
 
@@ -54,6 +58,8 @@ export function OtpVerifyForm({
             maxLength={6}
             returnKeyType="send"
             onSubmitEditing={handleSubmit}
+            autoFocus={autoFocus}
+            onFocus={onFocus}
             className="h-12 rounded-2xl border-transparent bg-muted pl-11 text-base tracking-widest"
           />
         </View>

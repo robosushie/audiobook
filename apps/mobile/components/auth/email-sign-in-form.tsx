@@ -10,9 +10,10 @@ import { View } from 'react-native';
 type EmailSignInFormProps = {
   isLoading: boolean;
   onSubmit: (email: string) => void;
+  onFocus?: () => void;
 };
 
-export function EmailSignInForm({ isLoading, onSubmit }: EmailSignInFormProps) {
+export function EmailSignInForm({ isLoading, onSubmit, onFocus }: EmailSignInFormProps) {
   const [email, setEmail] = React.useState('');
 
   function handleSubmit() {
@@ -36,6 +37,7 @@ export function EmailSignInForm({ isLoading, onSubmit }: EmailSignInFormProps) {
           editable={!isLoading}
           returnKeyType="send"
           onSubmitEditing={handleSubmit}
+          onFocus={onFocus}
           className="h-12 rounded-2xl border-transparent bg-muted pl-11 text-base"
         />
       </View>

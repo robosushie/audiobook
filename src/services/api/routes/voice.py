@@ -25,6 +25,7 @@ from src.lib.error import (
     VOICE_PROFILE_NOT_FOUND,
     VOICE_USER_NOT_FOUND,
 )
+from src.lib.feature.sse.notify import publish_voice_row
 from src.lib.voice.preprocess import create_queued_voice_profile
 from src.models.content.reference import Reference
 from src.models.content.voice import Voice, VoiceCreate, VoiceRead, VoiceUpdate
@@ -166,6 +167,11 @@ async def upload_voice_profile(
             session=session,
         )
         await enqueue_voice_preprocess(profile_id=profile.id, user_id=user.id)
+        ref_result = await session.execute(
+            select(Reference.language).where(Reference.id == profile.reference_id),
+        )
+        ref_language = ref_result.scalar_one()
+        await publish_voice_row(profile, ref_language, "voice.created")
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

@@ -3,7 +3,7 @@
 import asyncio
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, Form, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,10 +36,18 @@ def _author_json(
 @router.get("", name="List books (no slash)", response_model=list[BookRead], include_in_schema=False)
 @router.get("/", name="List books", response_model=list[BookRead])
 async def list_books(
+    trending: bool | None = Query(default=None, description="When true, only trending catalogue books"),
+    limit: int | None = Query(default=None, ge=1, le=50),
     session: AsyncSession = Depends(get_session),
 ) -> list[BookRead]:
-    """List all books. Allowed for admin and regular users."""
-    result = await session.execute(select(Book).order_by(Book.created_at.desc()))
+    """List catalogue books. Allowed for admin and regular users."""
+    query = select(Book).where(Book.is_active == True)  # noqa: E712
+    if trending is True:
+        query = query.where(Book.is_trending == True)  # noqa: E712
+    query = query.order_by(Book.created_at.desc())
+    if limit is not None:
+        query = query.limit(limit)
+    result = await session.execute(query)
     books = result.scalars().all()
     return [BookRead.model_validate(b) for b in books]
 
@@ -131,10 +139,9 @@ async def create_book_with_content(
 @router.get("/{book_id}/content", name="Get book manuscript", response_model=BookContentRead)
 async def get_book_content(
     book_id: UUID,
-    _: None = Depends(auth_admin),
     session: AsyncSession = Depends(get_session),
 ) -> BookContentRead:
-    """Fetch manuscript text from object storage. Admin only."""
+    """Fetch manuscript text from object storage for catalogue reading."""
     result = await session.execute(select(Book).where(Book.id == book_id))
     book = result.scalar_one_or_none()
     if not book:

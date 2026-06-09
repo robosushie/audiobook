@@ -46,9 +46,13 @@ const COVERS: CoverItem[] = [
   },
 ];
 
-export function LoginHeroCovers() {
+type LoginHeroCoversProps = {
+  className?: string;
+};
+
+export function LoginHeroCovers({ className }: LoginHeroCoversProps) {
   return (
-    <View className="relative h-[52%] overflow-hidden">
+    <View className={cn('relative overflow-hidden', className ?? 'h-[52%]')}>
       <LinearGradient
         colors={[BRAND.loginHeroTop, BRAND.loginHeroMid, BRAND.background, BRAND.background]}
         locations={[0, 0.38, 0.72, 1]}

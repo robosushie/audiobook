@@ -1,15 +1,12 @@
 import { useUser } from "@clerk/react";
 
-const ADMIN_ROLE = "admin";
+import { getClerkUserRole, isAdminRole } from "@/state/auth";
 
 export function useAdminAccess() {
   const { user, isLoaded, isSignedIn } = useUser();
 
-  const role =
-    (user?.publicMetadata?.role as string | undefined) ??
-    (user?.unsafeMetadata?.role as string | undefined);
-
-  const isAdmin = isSignedIn && role === ADMIN_ROLE;
+  const role = getClerkUserRole(user);
+  const isAdmin = isSignedIn && isAdminRole(role);
 
   return {
     isLoaded,

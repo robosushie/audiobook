@@ -41,6 +41,11 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        'tag-blue': 'hsl(var(--tag-blue))',
+        'tag-purple': 'hsl(var(--tag-purple))',
+        'tag-pink': 'hsl(var(--tag-pink))',
+        'tag-green': 'hsl(var(--tag-green))',
+        'tag-yellow': 'hsl(var(--tag-yellow))',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -66,6 +71,7 @@ module.exports = {
       },
       boxShadow: {
         pop: 'var(--shadow-pop)',
+        soft: '0 4px 20px -4px rgb(0 0 0 / 0.1)',
       },
     },
   },

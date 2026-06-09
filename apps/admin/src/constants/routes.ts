@@ -7,5 +7,6 @@ export const ROUTES = {
   simulate: "/simulate",
   simulateVoice: "/simulate/voice",
   simulateAudiobook: "/simulate/audiobook",
+  audiobooks: "/audiobooks",
   settings: "/settings",
 } as const;

@@ -1,6 +1,7 @@
 import { useAuth } from "@clerk/react";
 import { Navigate, useLocation } from "react-router-dom";
 
+import { NonAdminAccessScreen } from "@/components/auth/NonAdminAccessScreen";
 import { ROUTES } from "@/constants/routes";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 
@@ -26,15 +27,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAdmin) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-        <h1 className="text-xl font-semibold">Admin access required</h1>
-        <p className="max-w-md text-sm text-muted-foreground">
-          Your account is signed in but does not have the admin role. Use an admin email from
-          bootstrap or ask an operator to update your Clerk public metadata.
-        </p>
-      </div>
-    );
+    return <NonAdminAccessScreen title="Admin access required" />;
   }
 
   return children;

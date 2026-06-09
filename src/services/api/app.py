@@ -8,6 +8,9 @@ from src.lib.schemas.fastapi import Middleware
 from src.lib.schemas.fastapi import Server as FastAPI
 from src.services.api.routes.audiobooks import router as audiobooks_router
 from src.services.api.routes.books import router as books_router
+from src.services.api.routes.events import internal_router as events_internal_router
+from src.services.api.routes.events import router as events_router
+from src.services.api.routes.playbacks import router as playbacks_router
 from src.services.api.routes.references import router as references_router
 from src.services.api.routes.stats import router as stats_router
 from src.services.api.routes.users import router as users_router
@@ -60,6 +63,17 @@ app.include_router(
 )
 app.include_router(
     audiobooks_router,
+    prefix="/api",
+    dependencies=[Depends(user_auth)],
+)
+app.include_router(
+    playbacks_router,
+    prefix="/api",
+    dependencies=[Depends(user_auth)],
+)
+app.include_router(events_internal_router)
+app.include_router(
+    events_router,
     prefix="/api",
     dependencies=[Depends(user_auth)],
 )

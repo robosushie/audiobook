@@ -128,15 +128,32 @@ export type AudiobookGenerateBody = {
   cloner_type?: "indicf5" | "xttsv2" | null;
 };
 
+export type AudiobookStatus = "queued" | "processing" | "completed" | "failed";
+
 export type AudiobookRow = {
   id: string;
   user_id: string;
   book_id: string;
   voice_profile_id: string;
-  status: string;
+  status: AudiobookStatus | string;
   content_url?: string | null;
   duration?: number | null;
+  completed_at?: string | null;
 };
+
+export type AdminAudiobookRow = AudiobookRow & {
+  book_title?: string | null;
+  book_cover_url?: string | null;
+  book_language?: string | null;
+  user_email?: string | null;
+  user_name?: UserName | null;
+  created_at: string;
+};
+
+export type AudiobookStatusFilter =
+  | "all"
+  | "queued_completed"
+  | AudiobookStatus;
 
 export type DashboardOverview = {
   total_users: number;
