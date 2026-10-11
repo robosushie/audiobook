@@ -8,7 +8,7 @@ import { openBook } from '@/lib/navigation/book';
 import { matchesBookQuery } from '@/lib/search/matches-query';
 import { useRouter } from 'expo-router';
 import type { BookRow } from '@/types/api';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useTabContentInset } from '@/contexts/audiobook-player';
 import * as React from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
+  const scrollBottomPadding = useTabContentInset();
   const { books, isLoading, error, refetch } = useCatalogueBooks();
 
   const [query, setQuery] = React.useState('');
@@ -61,7 +61,7 @@ export default function SearchScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           paddingTop: insets.top + 12,
-          paddingBottom: tabBarHeight + 16,
+          paddingBottom: scrollBottomPadding,
         }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={() => void refetch()} />

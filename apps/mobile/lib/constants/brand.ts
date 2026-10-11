@@ -5,7 +5,7 @@ export const BRAND = {
   foreground: '#000000',
   card: '#ffffff',
   muted: '#666666',
-  cotton: '#ffb4ed',
+  cotton: '#d6e4f7',
   signal: '#1871da',
   pulse: '#1ec072',
   hot: '#f6609f',

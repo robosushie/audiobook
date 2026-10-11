@@ -2,6 +2,7 @@ import { upsertMyPlayback } from '@/api/playbacks';
 import { ensureAudiobookAudioFile } from '@/lib/audio/audiobook-cache';
 import { canPlayAudiobook, type PlayableAudiobook } from '@/lib/audio/playable';
 import { useAuth } from '@clerk/expo';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import {
   setAudioModeAsync,
   useAudioPlayer,
@@ -17,6 +18,7 @@ type AudiobookPlayerContextValue = {
   isLoadingAudio: boolean;
   getProgress: (item: PlayableAudiobook) => number;
   playAudiobook: (item: PlayableAudiobook) => Promise<void>;
+  dismissAudiobook: () => Promise<void>;
 };
 
 const AudiobookPlayerContext = React.createContext<AudiobookPlayerContextValue | null>(null);
@@ -144,6 +146,15 @@ export function AudiobookPlayerProvider({ children }: { children: React.ReactNod
     [activeAudiobook?.id, persistProgress, player, savedProgress, status.duration, status.playing],
   );
 
+  const dismissAudiobook = React.useCallback(async () => {
+    if (activeAudiobook?.id && status.duration && status.duration > 0) {
+      await persistProgress(activeAudiobook.id, status.currentTime / status.duration);
+    }
+    player.pause();
+    setActiveAudiobook(null);
+    cachedUriRef.current = null;
+  }, [activeAudiobook?.id, persistProgress, player, status.currentTime, status.duration]);
+
   const getProgress = React.useCallback(
     (item: PlayableAudiobook) => {
       if (activeAudiobook?.id === item.id && status.duration && status.duration > 0) {
@@ -162,8 +173,9 @@ export function AudiobookPlayerProvider({ children }: { children: React.ReactNod
       isLoadingAudio,
       getProgress,
       playAudiobook,
+      dismissAudiobook,
     }),
-    [activeAudiobook, getProgress, isLoadingAudio, playAudiobook, status.playing],
+    [activeAudiobook, dismissAudiobook, getProgress, isLoadingAudio, playAudiobook, status.playing],
   );
 
   return (
@@ -177,4 +189,11 @@ export function useAudiobookPlayer() {
     throw new Error('useAudiobookPlayer must be used within AudiobookPlayerProvider');
   }
   return ctx;
+}
+
+/** Extra space so lists clear the tab bar and the floating player. */
+export function useTabContentInset() {
+  const tabBarHeight = useBottomTabBarHeight();
+  const { activeAudiobook } = useAudiobookPlayer();
+  return tabBarHeight + 16 + (activeAudiobook ? 72 : 0);
 }

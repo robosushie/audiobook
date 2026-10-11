@@ -4,7 +4,7 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { useAuth, useUser } from '@clerk/expo';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useTabContentInset } from '@/contexts/audiobook-player';
 import { useRouter } from 'expo-router';
 import {
   CircleHelp,
@@ -24,7 +24,7 @@ export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut } = useAuth();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
+  const scrollBottomPadding = useTabContentInset();
   const { stats, isLoading } = useProfileStats();
 
   const name = user?.fullName?.trim() || user?.username || 'Listener';
@@ -42,7 +42,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: insets.top + 12,
-          paddingBottom: tabBarHeight + 16,
+          paddingBottom: scrollBottomPadding,
           paddingHorizontal: 20,
         }}>
         <Text className="mb-5 text-2xl font-bold tracking-tight">Profile</Text>
@@ -87,7 +87,7 @@ export default function ProfileScreen() {
             title="Settings"
             subtitle="Notifications, playback, downloads"
             icon={Settings}
-            disabled
+            onPress={() => router.push('/(tabs)/profile/settings' as never)}
           />
           <ProfileMenuRow
             title="Help & support"

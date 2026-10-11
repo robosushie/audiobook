@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>App screens — layout review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,520&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1c1915;
+      --muted: #6d655c;
+      --paper: #f4efe6;
+      --stone: #e6dfd4;
+      --line: rgba(28, 25, 21, 0.12);
+      --glass: rgba(255, 252, 247, 0.7);
+      --edge: rgba(255, 255, 255, 0.86);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 420px at 8% -10%, #f7f1e6, transparent 55%), #d9d2c6;
+      color: var(--ink);
+      font-family: Outfit, sans-serif;
+    }
+    .review { max-width: 1680px; margin: 0 auto; padding: 28px 28px 0; }
+    .review h1 { margin: 0 0 8px; font-family: Fraunces, serif; font-size: 32px; font-weight: 520; letter-spacing: -0.03em; }
+    .review p { max-width: 760px; margin: 0; color: var(--muted); line-height: 1.5; }
+    .board { display: flex; gap: 28px; overflow-x: auto; padding: 28px; align-items: flex-start; }
+    .shot { width: 390px; flex: 0 0 auto; }
+    .shot h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .phone {
+      position: relative; height: 844px; overflow: hidden; border-radius: 40px; background: var(--stone);
+      box-shadow: 0 30px 70px rgba(40, 30, 16, 0.18), inset 0 0 0 1px rgba(255,255,255,0.45);
+    }
+    .wash { position: absolute; inset: 0; pointer-events: none; }
+    .wash i { position: absolute; display: block; }
+    .wash .a { left: -24px; top: 90px; width: 110px; height: 150px; background: #8ea0b8; }
+    .wash .b { right: -18px; top: 260px; width: 90px; height: 120px; background: #c4a27a; }
+    .wash .c { left: 24px; bottom: 180px; width: 70px; height: 96px; background: #7f9a86; }
+    .scroll { position: absolute; inset: 0 0 16px 0; overflow: auto; padding: 52px 18px 16px; }
+    .has-tab .scroll { bottom: 62px; }
+    .has-player .scroll { bottom: 128px; }
+    .player-hidden .scroll { bottom: 62px; }
+    .no-tab.has-player .scroll { bottom: 78px; }
+    .no-tab.player-hidden .scroll { bottom: 16px; }
+    .scroll::-webkit-scrollbar { width: 0; }
+    .status { position: absolute; z-index: 4; top: 14px; left: 22px; right: 22px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; }
+    .serif { font-family: Fraunces, serif; font-weight: 520; letter-spacing: -0.03em; }
+    .kicker, .fine { color: var(--muted); font-size: 12px; }
+    .kicker { margin: 0; }
+    h3 { margin: 2px 0 0; font-size: 26px; line-height: 1.1; }
+    .crystal, .tab {
+      background: var(--glass);
+      backdrop-filter: blur(18px) saturate(1.35);
+      -webkit-backdrop-filter: blur(18px) saturate(1.35);
+      border: 1px solid var(--edge);
+      box-shadow: inset 0 1px 0 #fff, 0 8px 24px rgba(40, 30, 16, 0.1);
+    }
+    .plate { background: rgba(244, 239, 230, 0.94); border: 1px solid var(--line); }
+    .head, .section, .meta { display: flex; justify-content: space-between; align-items: flex-end; }
+    .bell { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; }
+    .section { margin: 18px 0 8px; }
+    .section h4 { margin: 0; font-size: 17px; }
+    .spread, .row { display: grid; gap: 10px; align-items: center; padding: 10px; border-radius: 16px; }
+    .spread { grid-template-columns: 78px 1fr; }
+    .row { grid-template-columns: 48px 1fr auto; margin-top: 8px; }
+    .cover { min-height: 104px; border-radius: 8px; display: flex; align-items: flex-end; padding: 8px; color: #f4efe6; font-family: Fraunces, serif; font-size: 12px; }
+    .row .cover { min-height: 60px; font-size: 10px; }
+    .c1 { background: #243044; } .c2 { background: #6e4b32; } .c3 { background: #2c4a3e; } .c4 { background: #4a3048; }
+    .c5 { background: #3d4f86; } .c6 { background: #8a6232; }
+    .spread h4, .row h4, .menu strong { margin: 0; font-size: 15px; }
+    .thread { height: 3px; background: rgba(28,25,21,0.12); border-radius: 99px; overflow: hidden; }
+    .thread b { display: block; height: 100%; width: 62%; background: var(--ink); }
+    .rail { display: flex; gap: 10px; overflow: auto; }
+    .card { width: 120px; flex: 0 0 auto; }
+    .card .cover { min-height: 150px; }
+    .card p { margin: 6px 0 0; font-size: 13px; }
+    .filters, .langs { display: flex; gap: 8px; overflow: auto; margin: 14px 0; }
+    .filters button, .langs button, .fail, .switch {
+      border: 0; border-radius: 999px; padding: 8px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: rgba(244,239,230,0.92);
+    }
+    .filters button.on, .langs button.on { background: #d6e4f7; }
+    .stamp { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 3px 7px; background: rgba(28,25,21,0.06); }
+    .ok { background: rgba(47,107,79,0.14); } .wait { background: rgba(138,90,18,0.14); } .bad { background: rgba(156,59,50,0.14); }
+    .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tile { min-height: 84px; border-radius: 14px; padding: 12px; color: var(--ink); font-weight: 600; }
+    .search { border-radius: 999px; padding: 12px 14px; color: var(--muted); font-size: 14px; }
+    .menu { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; margin-top: 8px; padding: 12px; border-radius: 16px; font: inherit; cursor: pointer; }
+    .menu span { display: block; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+    .stats div { text-align: center; padding: 10px 4px; border-radius: 14px; }
+    .stats strong { display: block; font-size: 18px; }
+    .avatar { width: 52px; height: 52px; border-radius: 50%; background: #d6e4f7; display: grid; place-items: center; font-weight: 600; }
+    .who { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 16px; }
+    .signout { width: 100%; margin-top: 12px; padding: 12px; border-radius: 16px; border: 1px solid var(--line); background: var(--paper); color: #9c3b32; font: inherit; font-weight: 600; }
+    .field { margin-top: 12px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .field input, .passage { width: 100%; border: 1px solid var(--line); background: rgba(244,239,230,0.94); border-radius: 14px; padding: 12px; font: inherit; }
+    .passage { font-family: Fraunces, serif; font-size: 18px; line-height: 1.4; margin-top: 12px; }
+    .setting { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 16px; margin-top: 8px; }
+    .toggle { width: 42px; height: 24px; border-radius: 99px; background: #d6e4f7; position: relative; border: 0; }
+    .toggle i { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+    .toggle.off { background: rgba(28,25,21,0.15); }
+    .toggle.off i { right: auto; left: 3px; }
+    .group { margin-top: 16px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .player {
+      position: absolute; left: 10px; right: 10px; bottom: 70px; z-index: 5;
+      border-radius: 16px; padding: 7px 8px;
+    }
+    .no-tab .player { bottom: 12px; }
+    .player-hidden .player { display: none; }
+    .dock-main { display: grid; grid-template-columns: 40px minmax(0, 1fr) 30px 30px; gap: 8px; align-items: center; }
+    .mini-cover { width: 40px; height: 40px; border-radius: 6px; background: #243044; color: #f4efe6; font-size: 9px; display: flex; align-items: flex-end; padding: 4px; font-family: Fraunces, serif; }
+    .mini-copy { min-width: 0; }
+    .mini-copy strong { display: block; font-size: 13px; font-weight: 600; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini-copy span { display: block; margin-top: 1px; font-size: 11px; color: var(--muted); line-height: 1.15; }
+    .mini-copy .thread { margin-top: 5px; }
+    .play, .dismiss {
+      width: 30px; height: 30px; border-radius: 50%; border: 0; cursor: pointer; font-size: 13px;
+    }
+    .play { background: var(--ink); color: var(--paper); }
+    .dismiss { background: rgba(255,255,255,0.55); color: var(--ink); border: 1px solid var(--line); }
+    .tab {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; height: 62px; border-radius: 0;
+      border-left: 0; border-right: 0; border-bottom: 0;
+      display: flex; align-items: flex-end; justify-content: space-around; padding-bottom: 10px; font-size: 11px; font-weight: 600;
+    }
+    .tab b { background: #d6e4f7; border-radius: 999px; padding: 6px 10px; }
+    .back { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: transparent; font-size: 16px; }
+    .top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .clone { position: absolute; left: 10px; right: 10px; bottom: 12px; z-index: 5; border-radius: 18px; padding: 10px; }
+    .book-phone .scroll { bottom: 78px; }
+    .book-phone.cloning .scroll { bottom: 230px; }
+    .create, .generate { width: 100%; border: 0; border-radius: 999px; padding: 12px; background: var(--ink); color: var(--paper); font: inherit; font-weight: 600; cursor: pointer; }
+    .voices { display: none; }
+    .cloning .voices { display: block; }
+    .cloning .create { display: none; }
+    .voice { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding: 10px; border-radius: 14px; border: 1px solid var(--line); background: rgba(244,239,230,0.94); font: inherit; text-align: left; cursor: pointer; }
+    .voice.on { background: #d6e4f7; }
+    .generate { margin-top: 8px; }
+    .mic {
+      position: absolute; left: 10px; right: 10px; bottom: 70px; z-index: 5; border-radius: 18px; padding: 10px;
+      display: grid; grid-template-columns: 1fr 46px; gap: 8px; align-items: center;
+    }
+    .add-voice .scroll { bottom: 148px; }
+    .rec-btn { width: 46px; height: 46px; border: 0; border-radius: 50%; background: #9c3b32; color: #fff; font-size: 16px; cursor: pointer; }
+    .recording .rec-btn { background: var(--ink); }
+    .wave { display: flex; gap: 2px; align-items: flex-end; height: 16px; margin-top: 4px; }
+    .wave i { width: 2px; height: 4px; background: #9c3b32; display: block; border-radius: 2px; }
+    .recording .wave i { animation: bar 0.7s ease-in-out infinite; }
+    .wave i:nth-child(odd) { animation-delay: 0.12s; }
+    @keyframes bar { 50% { height: 16px; } }
+    .hero-mark { height: 180px; position: relative; }
+    .hero-mark i { position: absolute; display: block; }
+    .continue { width: 100%; margin-top: 14px; }
+    @media (prefers-reduced-motion: reduce) { .wave i { animation: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="review">
+    <h1>All current screens</h1>
+    <p>Tabs stay Home, Search, Library, and Profile. The playing card is shorter: cover, title, chapter line, and progress sit together, with play and close beside them. On Book, Create audiobook opens the voice panel. Close dismisses the player on that screen.</p>
+  </header>
+  <div class="board">
+    <section class="shot">
+      <h2>Sign in</h2>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span></span></div>
+        <div class="scroll">
+          <div class="hero-mark">
+            <i class="a" style="position:absolute;left:8px;top:10px;width:70px;height:90px;background:#8ea0b8"></i>
+            <i style="position:absolute;right:16px;top:24px;width:64px;height:80px;background:#1ec072"></i>
+            <i style="position:absolute;left:80px;top:70px;width:48px;height:48px;background:#ffbb38"></i>
+          </div>
+          <p class="serif" style="font-size:20px;margin:0">Audiobook</p>
+          <h3 class="serif">Your books,<br>in your <span style="background:#d6e4f7">voice.</span></h3>
+          <p class="fine">Sign in to listen anywhere, anytime.</p>
+          <div class="field"><input placeholder="Email" /></div>
+          <button class="create continue" type="button">Continue</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>Home</h2>
+      <div class="phone has-tab has-player">
+        <div class="wash"><i class="a"></i><i class="b"></i></div>
+        <div class="status"><span>9:41</span><span>Home</span></div>
+        <div class="scroll">
+          <div class="head">
+            <div><p class="kicker">Sunday, October 11</p><h3 class="serif">Good evening, Sushant</h3></div>
+            <div class="bell crystal">◔</div>
+          </div>
+          <div class="section"><h4 class="serif">Continue</h4></div>
+          <article class="spread plate"><div class="cover c1">Garden</div><div><h4 class="serif">The Garden Bench</h4><p class="fine">Chapter 4 · 18 min left</p><div class="thread" style="margin-top:8px"><b></b></div></div></article>
+          <div class="section"><h4 class="serif">Your audio books</h4><span class="fine">See all</span></div>
+          <article class="row plate"><div class="cover c1">Garden</div><div><h4 class="serif">The Garden Bench</h4><p class="fine">English · 62%</p></div><span class="stamp ok">Completed</span></article>
+          <article class="row plate"><div class="cover c3">Salt</div><div><h4 class="serif">The Salt Line</h4><p class="fine">Malayalam</p></div><span class="stamp wait">Processing</span></article>
+          <div class="section"><h4 class="serif">Recommended for you</h4><span class="fine">See all</span></div>
+          <p class="fine" style="margin-top:-4px">Picked for your taste</p>
+          <div class="rail"><article class="card"><div class="cover c2">सुबह</div><p class="serif">बाग की सुबह</p></article><article class="card"><div class="cover c4">حديقة</div><p class="serif">صباح الحديقة</p></article></div>
+          <div class="section"><h4 class="serif">Trending now</h4><span class="fine">See all</span></div>
+          <article class="row plate"><div class="cover c4">حديقة</div><div><h4 class="serif">صباح الحديقة</h4><p class="fine">Arabic · adventure</p></div></article>
+        </div>
+        <nav class="tab"><b>Home</b><span>Search</span><span>Library</span><span>Profile</span></nav>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>Search</h2>
+      <div class="phone has-tab has-player">
+        <div class="wash"><i class="c"></i></div>
+        <div class="status"><span>9:41</span><span>Search</span></div>
+        <div class="scroll">
+          <h3 class="serif">Search</h3>
+          <div class="search crystal" style="margin-top:12px">Search books</div>
+          <p class="group">Browse all</p>
+          <div class="tiles">
+            <div class="tile plate" style="background:#1871da;color:#fff">Adventure</div>
+            <div class="tile plate" style="background:#1ec072">Fairytale</div>
+            <div class="tile plate" style="background:#ffbb38">Mythical</div>
+            <div class="tile plate" style="background:#f6609f">Fantasy</div>
+            <div class="tile plate" style="background:#9664d7;color:#fff">Sci-Fi</div>
+            <div class="tile plate" style="background:#243044;color:#fff">Mystery</div>
+          </div>
+        </div>
+        <nav class="tab"><span>Home</span><b>Search</b><span>Library</span><span>Profile</span></nav>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>Genre</h2>
+      <div class="phone no-tab has-player">
+        <div class="status"><span>9:41</span><span>Adventure</span></div>
+        <div class="scroll">
+          <div class="top"><button class="back" type="button">←</button><h3 class="serif">Adventure</h3></div>
+          <div class="search crystal">Search in Adventure</div>
+          <p class="fine" style="margin-top:10px">Adventure · 2</p>
+          <article class="row plate"><div class="cover c3">Salt</div><div><h4 class="serif">The Salt Line</h4><p class="fine">Malayalam</p></div></article>
+          <article class="row plate"><div class="cover c4">حديقة</div><div><h4 class="serif">صباح الحديقة</h4><p class="fine">Arabic</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>Library</h2>
+      <div class="phone has-tab has-player" id="library">
+        <div class="wash"><i class="b"></i></div>
+        <div class="status"><span>9:41</span><span>Library</span></div>
+        <div class="scroll">
+          <h3 class="serif">Your Library</h3>
+          <div class="filters" id="filters">
+            <button type="button" class="on" data-kind="all">All</button>
+            <button type="button" data-kind="completed">Completed</button>
+            <button type="button" data-kind="processing">Processing</button>
+            <button type="button" data-kind="queued">Queued</button>
+          </div>
+          <div class="meta"><span class="fine" id="count">4 audiobooks</span><button class="fail" type="button" id="failed">Show failed</button></div>
+          <div id="rows">
+            <article class="row plate" data-kind="completed"><div class="cover c1">Garden</div><div><h4 class="serif">The Garden Bench</h4><p class="fine">English · chapter 4</p></div><span class="stamp ok">Completed</span></article>
+            <article class="row plate" data-kind="processing"><div class="cover c3">Salt</div><div><h4 class="serif">The Salt Line</h4><p class="fine">Generating</p></div><span class="stamp wait">Processing</span></article>
+            <article class="row plate" data-kind="queued"><div class="cover c2">सुबह</div><div><h4 class="serif">बाग की सुबह</h4><p class="fine">Waiting</p></div><span class="stamp">Queued</span></article>
+            <article class="row plate" data-kind="completed"><div class="cover c4">حديقة</div><div><h4 class="serif">صباح الحديقة</h4><p class="fine">Finished</p></div><span class="stamp ok">Completed</span></article>
+            <article class="row plate" data-kind="failed" hidden><div class="cover c6">Draft</div><div><h4 class="serif">Untitled reading</h4><p class="fine">Could not finish</p></div><span class="stamp bad">Failed</span></article>
+          </div>
+        </div>
+        <nav class="tab"><span>Home</span><span>Search</span><b>Library</b><span>Profile</span></nav>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>Book</h2>
+      <div class="phone book-phone" id="book">
+        <div class="wash"><i class="a"></i></div>
+        <div class="status"><span>9:41</span><span>Book</span></div>
+        <div class="scroll">
+          <div class="top"><button class="back" type="button">←</button><h3 class="serif" style="font-size:22px">Book</h3></div>
+          <article class="spread plate"><div class="cover c1">Garden</div><div><h4 class="serif">The Garden Bench</h4><p class="fine">Asha Mehta</p><p class="fine">English · fairytale</p></div></article>
+          <p class="group">About</p>
+          <p class="fine">A morning in the garden, read aloud in a voice you already recorded.</p>
+          <p class="group">Content</p>
+          <article class="passage">The garden was still wet when she sat on the bench and read the whole page aloud, without skipping a line.</article>
+        </div>
+        <div class="clone crystal">
+          <button class="create" id="open-clone" type="button">Create audiobook</button>
+          <div class="voices">
+            <p class="fine">Voice profile · English</p>
+            <button class="voice on" type="button"><span><strong>Mira</strong><br><span class="fine">English · ready</span></span><span class="stamp">Selected</span></button>
+            <button class="voice" type="button"><span><strong>Arun</strong><br><span class="fine">English · ready</span></span></button>
+            <button class="generate" type="button">Generate audiobook</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>Profile</h2>
+      <div class="phone has-tab has-player">
+        <div class="status"><span>9:41</span><span>Profile</span></div>
+        <div class="scroll">
+          <h3 class="serif">Profile</h3>
+          <div class="who plate" style="margin-top:14px"><div class="avatar">SS</div><div><strong>Sushant</strong><p class="fine">ssamuel.sushant@gmail.com</p><span class="stamp">Member</span></div></div>
+          <div class="stats"><div class="plate"><strong>4</strong><span class="fine">Audiobooks</span></div><div class="plate"><strong>3</strong><span class="fine">Hours</span></div><div class="plate"><strong>2</strong><span class="fine">Voices</span></div></div>
+          <button class="menu plate" type="button"><span><strong>My voices</strong><span class="fine">Manage your custom narrator voices</span></span></button>
+          <button class="menu plate" type="button"><span><strong>Family</strong><span class="fine">Share with up to 5 people</span></span></button>
+          <button class="menu plate" type="button"><span><strong>Subscription</strong><span class="fine">Manage your plan</span></span></button>
+          <button class="menu plate" type="button"><span><strong>Settings</strong><span class="fine">Notifications, playback, downloads</span></span></button>
+          <button class="menu plate" type="button"><span><strong>Help &amp; support</strong><span class="fine">FAQs, contact us</span></span></button>
+          <button class="signout" type="button">Sign out</button>
+        </div>
+        <nav class="tab"><span>Home</span><span>Search</span><span>Library</span><b>Profile</b></nav>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>My voices</h2>
+      <div class="phone has-tab has-player">
+        <div class="status"><span>9:41</span><span>My voices</span></div>
+        <div class="scroll">
+          <div class="top"><button class="back" type="button">←</button><h3 class="serif" style="font-size:22px;flex:1">My voices</h3><button class="play" type="button">+</button></div>
+          <article class="row plate"><div class="cover c5">Mi</div><div><h4 class="serif">Mira</h4><p class="fine">English</p></div><span class="stamp ok">Ready</span></article>
+          <article class="row plate"><div class="cover c3">Ar</div><div><h4 class="serif">Arun</h4><p class="fine">English</p></div><span class="stamp wait">Processing</span></article>
+          <button class="create" style="margin-top:14px" type="button">Add new voice</button>
+        </div>
+        <nav class="tab"><span>Home</span><span>Search</span><span>Library</span><b>Profile</b></nav>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>Add voice</h2>
+      <div class="phone has-tab add-voice" id="rec">
+        <div class="status"><span>9:41</span><span>Add voice</span></div>
+        <div class="scroll">
+          <div class="top"><button class="back" type="button">←</button><h3 class="serif" style="font-size:22px">Add voice</h3></div>
+          <div class="field"><label>Voice name</label><input value="Mira" /></div>
+          <label style="display:block;margin-top:12px;font-size:13px;font-weight:600">Language</label>
+          <div class="langs"><button class="on" type="button">English</button><button type="button">Hindi</button><button type="button">Malayalam</button><button type="button">Tamil</button><button type="button">Odia</button><button type="button">Arabic</button></div>
+          <p class="fine">Read this passage (English)</p>
+          <article class="passage">The garden was still wet when she sat on the bench and read the whole page aloud.</article>
+        </div>
+        <div class="mic crystal">
+          <div><strong id="rec-label">Ready</strong><p class="fine" id="rec-time">0s · not recording</p><div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+          <button class="rec-btn" id="mic" type="button">●</button>
+        </div>
+        <nav class="tab"><span>Home</span><span>Search</span><span>Library</span><b>Profile</b></nav>
+      </div>
+    </section>
+
+    <section class="shot">
+      <h2>Settings</h2>
+      <div class="phone has-tab has-player">
+        <div class="status"><span>9:41</span><span>Settings</span></div>
+        <div class="scroll">
+          <div class="top"><button class="back" type="button">←</button><h3 class="serif" style="font-size:22px">Settings</h3></div>
+          <p class="group">Notifications</p>
+          <div class="setting plate"><div><strong>Audiobook ready</strong><p class="fine">When a voice finishes generating</p></div><button class="toggle" type="button" aria-label="Audiobook ready"><i></i></button></div>
+          <p class="group">Playback</p>
+          <div class="setting plate"><div><strong>Default speed</strong><p class="fine">1.0×</p></div></div>
+          <div class="setting plate"><div><strong>Skip back</strong><p class="fine">15 seconds</p></div></div>
+          <div class="setting plate"><div><strong>Skip forward</strong><p class="fine">30 seconds</p></div></div>
+          <p class="group">Downloads</p>
+          <div class="setting plate"><div><strong>Wi-Fi only</strong><p class="fine">Download audiobooks on Wi-Fi</p></div><button class="toggle" type="button" aria-label="Wi-Fi only"><i></i></button></div>
+        </div>
+        <nav class="tab"><span>Home</span><span>Search</span><span>Library</span><b>Profile</b></nav>
+      </div>
+    </section>
+  </div>
+
+  <template id="player-template">
+    <div class="player crystal">
+      <div class="dock-main">
+        <div class="mini-cover">04</div>
+        <div class="mini-copy">
+          <strong>The Garden Bench</strong>
+          <span>Chapter 4 · 18 min left</span>
+          <div class="thread"><b></b></div>
+        </div>
+        <button class="play" type="button" aria-label="Play">▶</button>
+        <button class="dismiss" type="button" aria-label="Close">×</button>
+      </div>
+    </div>
+  </template>
+  <script>
+    const template = document.getElementById("player-template");
+    document.querySelectorAll(".has-player").forEach((phone) => {
+      phone.appendChild(template.content.cloneNode(true));
+    });
+
+    document.body.addEventListener("click", (event) => {
+      const play = event.target.closest(".play");
+      if (play && play.closest(".player")) {
+        play.textContent = play.textContent === "▶" ? "❚❚" : "▶";
+        return;
+      }
+      const dismiss = event.target.closest(".dismiss");
+      if (dismiss) dismiss.closest(".phone").classList.add("player-hidden");
+      const toggle = event.target.closest(".toggle");
+      if (toggle) toggle.classList.toggle("off");
+    });
+
+    const rows = [...document.querySelectorAll("#rows article")];
+    function applyFilter(kind, failedOnly) {
+      rows.forEach((row) => {
+        row.hidden = failedOnly ? row.dataset.kind !== "failed" : row.dataset.kind === "failed" || (kind !== "all" && row.dataset.kind !== kind);
+      });
+      const visible = rows.filter((row) => !row.hidden).length;
+      document.getElementById("count").textContent = visible + (visible === 1 ? " audiobook" : " audiobooks");
+    }
+    document.getElementById("filters").addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      document.querySelectorAll("#filters button").forEach((item) => item.classList.remove("on"));
+      button.classList.add("on");
+      const failed = document.getElementById("failed");
+      failed.textContent = "Show failed";
+      failed.dataset.on = "";
+      applyFilter(button.dataset.kind, false);
+    });
+    document.getElementById("failed").addEventListener("click", (event) => {
+      const on = event.currentTarget.dataset.on === "1";
+      event.currentTarget.dataset.on = on ? "" : "1";
+      event.currentTarget.textContent = on ? "Show failed" : "Hide failed";
+      applyFilter(document.querySelector("#filters button.on").dataset.kind, !on);
+    });
+
+    document.getElementById("open-clone").addEventListener("click", () => {
+      document.getElementById("book").classList.add("cloning");
+    });
+    document.querySelectorAll(".voice").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".voice").forEach((item) => {
+          item.classList.remove("on");
+          item.querySelector(".stamp")?.remove();
+        });
+        button.classList.add("on");
+        const mark = document.createElement("span");
+        mark.className = "stamp";
+        mark.textContent = "Selected";
+        button.appendChild(mark);
+      });
+    });
+    document.getElementById("mic").addEventListener("click", () => {
+      const phone = document.getElementById("rec");
+      const on = phone.classList.toggle("recording");
+      document.getElementById("rec-label").textContent = on ? "Recording" : "Ready";
+      document.getElementById("rec-time").textContent = on ? "Live · read the whole passage" : "0s · not recording";
+      eventTarget(on);
+    });
+    function eventTarget(on) {
+      document.getElementById("mic").textContent = on ? "■" : "●";
+    }
+    document.querySelectorAll(".langs").forEach((group) => {
+      group.addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) return;
+        group.querySelectorAll("button").forEach((item) => item.classList.remove("on"));
+        button.classList.add("on");
+      });
+    });
+  </script>
+</body>
+</html>

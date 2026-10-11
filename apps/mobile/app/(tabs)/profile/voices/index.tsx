@@ -4,7 +4,7 @@ import { VoiceProfileListRow } from '@/components/voices/voice-profile-row';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useVoiceProfiles } from '@/hooks/useVoiceProfiles';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useTabContentInset } from '@/contexts/audiobook-player';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import * as React from 'react';
@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function MyVoicesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
+  const scrollBottomPadding = useTabContentInset();
   const { voices, isLoading, error, refetch } = useVoiceProfiles();
 
   return (
@@ -28,7 +28,7 @@ export default function MyVoicesScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: insets.top + 12,
-          paddingBottom: tabBarHeight + 16,
+          paddingBottom: scrollBottomPadding,
           paddingHorizontal: 20,
         }}
         refreshControl={

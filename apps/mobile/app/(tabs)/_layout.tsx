@@ -1,6 +1,7 @@
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { AudiobookPlayerProvider } from '@/contexts/audiobook-player';
+import { NowPlayingCard } from '@/components/player/now-playing-card';
+import { AudiobookPlayerProvider, useAudiobookPlayer } from '@/contexts/audiobook-player';
 import { BRAND } from '@/lib/constants/brand';
 import { TAB_BAR_CONTENT_HEIGHT } from '@/lib/constants/layout';
 import { THEME } from '@/lib/theme';
@@ -94,6 +95,7 @@ export default function TabLayout() {
           }}
         />
         </Tabs>
+        <FloatingPlayer tabBarHeight={tabBarHeight} />
         </View>
     </AudiobookPlayerProvider>
   );
@@ -109,6 +111,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 4,
   },
+  player: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    zIndex: 20,
+  },
 });
 
 function TabIcon({ focused, children }: { focused: boolean; children: React.ReactNode }) {
@@ -119,6 +127,36 @@ function TabIcon({ focused, children }: { focused: boolean; children: React.Reac
         { backgroundColor: focused ? BRAND.cotton : 'transparent' },
       ]}>
       {children}
+    </View>
+  );
+}
+
+function FloatingPlayer({ tabBarHeight }: { tabBarHeight: number }) {
+  const {
+    activeAudiobook,
+    isPlaying,
+    isLoadingAudio,
+    getProgress,
+    playAudiobook,
+    dismissAudiobook,
+  } = useAudiobookPlayer();
+
+  if (!activeAudiobook) return null;
+
+  return (
+    <View style={[styles.player, { bottom: tabBarHeight + 8 }]}>
+      <NowPlayingCard
+        item={activeAudiobook}
+        progress={getProgress(activeAudiobook)}
+        isPlaying={isPlaying}
+        isLoading={isLoadingAudio}
+        onTogglePlay={() => {
+          void playAudiobook(activeAudiobook);
+        }}
+        onDismiss={() => {
+          void dismissAudiobook();
+        }}
+      />
     </View>
   );
 }

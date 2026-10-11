@@ -8,6 +8,7 @@ export const theme = {
     mutedForeground: "#666666",
     border: "#e5e7eb",
     chart: "#1871da",
+    highlight: "#d6e4f7",
     chartMuted: "#f7f7f7",
     pulse: "#1ec072",
   },

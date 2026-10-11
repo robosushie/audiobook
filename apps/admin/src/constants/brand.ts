@@ -4,7 +4,7 @@ export const BRAND = {
   background: "#e5e7eb",
   foreground: "#000000",
   muted: "#666666",
-  cotton: "#ffb4ed",
+  cotton: "#d6e4f7",
   loginHeroTop: "#e5e7eb",
   loginHeroMid: "#e5e7eb",
   coverGradients: {

@@ -1,8 +1,7 @@
-import { CreateAudiobookModal } from '@/components/book/create-audiobook-modal';
+import { CreateAudiobookDock } from '@/components/book/create-audiobook-modal';
 import { BookCover } from '@/components/home/book-cover';
 import { ScreenHeader } from '@/components/layout/screen-header';
 import { LoadingState } from '@/components/ui/app-loader';
-import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useBookDetail } from '@/hooks/useBookDetail';
 import { formatAuthorName, formatLanguage } from '@/lib/format';
@@ -18,7 +17,7 @@ export default function BookDetailScreen() {
   const bookId = typeof id === 'string' ? id : id?.[0];
 
   const { book, content, isLoading, error } = useBookDetail(bookId);
-  const [modalOpen, setModalOpen] = React.useState(false);
+  const [dockExpanded, setDockExpanded] = React.useState(false);
 
   const genreLabel = book?.genre?.replace(/_/g, ' ');
 
@@ -28,7 +27,7 @@ export default function BookDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: insets.top + 12,
-          paddingBottom: insets.bottom + 24,
+          paddingBottom: insets.bottom + (dockExpanded ? 280 : 96),
           paddingHorizontal: 20,
         }}>
         <ScreenHeader title="Book" onBack={() => router.back()} />
@@ -92,21 +91,15 @@ export default function BookDetailScreen() {
                 </View>
               )}
             </View>
-
-            <Button
-              className="rounded-full bg-accent"
-              onPress={() => setModalOpen(true)}>
-              <Text className="font-semibold text-accent-foreground">Create audiobook</Text>
-            </Button>
           </>
         ) : null}
       </ScrollView>
 
       {book ? (
-        <CreateAudiobookModal
-          visible={modalOpen}
+        <CreateAudiobookDock
           book={book}
-          onClose={() => setModalOpen(false)}
+          expanded={dockExpanded}
+          onExpandedChange={setDockExpanded}
         />
       ) : null}
     </View>

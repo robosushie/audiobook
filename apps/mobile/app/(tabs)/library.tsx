@@ -11,7 +11,7 @@ import {
   filterLibraryAudiobooks,
   type LibraryStatusFilter,
 } from '@/lib/library/filters';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useTabContentInset } from '@/contexts/audiobook-player';
 import * as React from 'react';
 import {
   RefreshControl,
@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
+  const scrollBottomPadding = useTabContentInset();
   const { audiobooks, isLoading, error, refetch } = useLibraryAudiobooks();
 
   const [statusFilter, setStatusFilter] = React.useState<LibraryStatusFilter>('all');
@@ -45,7 +45,7 @@ export default function LibraryScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: insets.top + 12,
-          paddingBottom: tabBarHeight + 16,
+          paddingBottom: scrollBottomPadding,
         }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={() => void refetch()} />

@@ -11,7 +11,7 @@
   --color-card-foreground: #000000;
   --color-sidebar: #e5e7eb;
   --color-sidebar-foreground: #000000;
-  --color-sidebar-accent: #ffb4ed;
+  --color-sidebar-accent: #d6e4f7;
   --color-muted: #f7f7f7;
   --color-muted-foreground: #666666;
   --color-border: #e5e7eb;
@@ -25,7 +25,7 @@
   /* Filled actions stay black. Cotton candy is the selected-nav wash. */
   --color-accent: #000000;
   --color-accent-foreground: #ffffff;
-  --color-cotton: #ffb4ed;
+  --color-cotton: #d6e4f7;
   --color-signal: #1871da;
   --color-pulse: #1ec072;
   --color-solar: #ffbb38;

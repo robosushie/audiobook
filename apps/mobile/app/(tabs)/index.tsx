@@ -3,14 +3,12 @@ import { HomeHeader } from '@/components/home/home-header';
 import { RecommendedCarousel } from '@/components/home/recommended-carousel';
 import { TrendingList } from '@/components/home/trending-list';
 import { YourAudiobooks } from '@/components/home/your-audiobooks';
-import { NowPlayingCard } from '@/components/player/now-playing-card';
 import { Text } from '@/components/ui/text';
-import { useAudiobookPlayer } from '@/contexts/audiobook-player';
+import { useAudiobookPlayer, useTabContentInset } from '@/contexts/audiobook-player';
 import { useHomeFeed } from '@/hooks/useHomeFeed';
 import { playableFromPlaybackRow } from '@/lib/audio/playable';
 import { openBook } from '@/lib/navigation/book';
 import { useUser } from '@clerk/expo';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import type { BookRow } from '@/types/api';
@@ -22,7 +20,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUser();
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
+  const scrollBottomPadding = useTabContentInset();
   const {
     isInitialLoading,
     isRefreshing,
@@ -34,22 +32,14 @@ export default function HomeScreen() {
     refetch,
   } = useHomeFeed();
   const {
-    activeAudiobook,
-    isPlaying,
     isLoadingAudio,
-    getProgress,
     playAudiobook,
   } = useAudiobookPlayer();
 
   const continuePlayable = continueItem ? playableFromPlaybackRow(continueItem) : null;
-  const featuredPlayable = continuePlayable ?? activeAudiobook;
-  const isActiveSession = Boolean(
-    activeAudiobook && featuredPlayable && activeAudiobook.id === featuredPlayable.id,
-  );
 
   const firstName = user?.firstName ?? user?.username ?? null;
   const showInitialSpinner = isInitialLoading && !continueItem && trendingBooks.length === 0;
-  const scrollBottomPadding = tabBarHeight + 16;
 
   const handleBookPress = React.useCallback(
     (book: BookRow) => {
@@ -59,56 +49,18 @@ export default function HomeScreen() {
   );
 
   const featuredCard = React.useMemo(() => {
-    if (!featuredPlayable) return null;
-
-    if (isActiveSession && activeAudiobook) {
-      return (
-        <NowPlayingCard
-          item={activeAudiobook}
-          progress={getProgress(activeAudiobook)}
-          isPlaying={isPlaying}
-          isLoading={isLoadingAudio}
-          onTogglePlay={() => {
-            playAudiobook(activeAudiobook);
-          }}
-        />
-      );
-    }
-
-    if (continueItem && continuePlayable) {
-      return (
-        <ContinueCard
-          item={continueItem}
-          isLoading={isLoadingAudio}
-          onPress={() => {
-            playAudiobook(continuePlayable);
-          }}
-        />
-      );
-    }
+    if (!continueItem || !continuePlayable) return null;
 
     return (
-      <NowPlayingCard
-        item={featuredPlayable}
-        progress={getProgress(featuredPlayable)}
-        isPlaying={isPlaying}
+      <ContinueCard
+        item={continueItem}
         isLoading={isLoadingAudio}
-        onTogglePlay={() => {
-          playAudiobook(featuredPlayable);
+        onPress={() => {
+          playAudiobook(continuePlayable);
         }}
       />
     );
-  }, [
-    activeAudiobook,
-    continueItem,
-    continuePlayable,
-    featuredPlayable,
-    getProgress,
-    isActiveSession,
-    isLoadingAudio,
-    isPlaying,
-    playAudiobook,
-  ]);
+  }, [continueItem, continuePlayable, isLoadingAudio, playAudiobook]);
 
   return (
     <View className="flex-1 bg-background">

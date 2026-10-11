@@ -8,7 +8,7 @@ import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { REFERENCE_LANGUAGES, formatReferenceLanguage } from '@/lib/constants/languages';
 import type { ReferenceLanguage, ReferenceRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useTabContentInset } from '@/contexts/audiobook-player';
 import { useRouter } from 'expo-router';
 import { Mic, Pause, Play, RotateCcw, Square } from 'lucide-react-native';
 import * as React from 'react';
@@ -24,7 +24,7 @@ export default function NewVoiceScreen() {
   const getTokenRef = React.useRef(getToken);
   getTokenRef.current = getToken;
   const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
+  const scrollBottomPadding = useTabContentInset();
 
   const [name, setName] = React.useState('');
   const [language, setLanguage] = React.useState<ReferenceLanguage>('english');
@@ -131,7 +131,7 @@ export default function NewVoiceScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           paddingTop: insets.top + 12,
-          paddingBottom: tabBarHeight + 16,
+          paddingBottom: scrollBottomPadding,
           paddingHorizontal: 20,
         }}>
         <ScreenHeader title="Add voice" onBack={() => router.back()} />

@@ -12,22 +12,23 @@ import type { BookRow, ReferenceLanguage, VoiceProfileRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
 import { ChevronDown, X } from 'lucide-react-native';
 import * as React from 'react';
-import { Alert, Modal, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Icon } from '@/components/ui/icon';
 
-type CreateAudiobookModalProps = {
-  visible: boolean;
+type CreateAudiobookDockProps = {
   book: BookRow;
-  onClose: () => void;
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
   onSuccess?: (audiobookId: string) => void;
 };
 
-export function CreateAudiobookModal({
-  visible,
+export function CreateAudiobookDock({
   book,
-  onClose,
+  expanded,
+  onExpandedChange,
   onSuccess,
-}: CreateAudiobookModalProps) {
+}: CreateAudiobookDockProps) {
   const { getToken } = useAuth();
   const getTokenRef = React.useRef(getToken);
   getTokenRef.current = getToken;
@@ -46,7 +47,7 @@ export function CreateAudiobookModal({
   );
 
   useUserEventSubscription((message) => {
-    if (!visible) return;
+    if (!expanded) return;
     if (message.type !== 'voice.created' && message.type !== 'voice.updated') return;
     const data = message.data as VoiceSSEPayload;
     if (data.language !== bookLanguage) return;
@@ -81,7 +82,7 @@ export function CreateAudiobookModal({
   const selectedVoice = readyVoices.find((v) => v.id === selectedVoiceId) ?? null;
 
   React.useEffect(() => {
-    if (!visible) return;
+    if (!expanded) return;
 
     let cancelled = false;
     setError(null);
@@ -109,7 +110,7 @@ export function CreateAudiobookModal({
     return () => {
       cancelled = true;
     };
-  }, [visible, bookLanguage]);
+  }, [expanded, bookLanguage]);
 
   async function handleGenerate() {
     if (!selectedVoiceId) {
@@ -128,7 +129,7 @@ export function CreateAudiobookModal({
         voice_profile_id: selectedVoiceId,
       });
 
-      onClose();
+      onExpandedChange(false);
       onSuccess?.(audiobook.id);
       Alert.alert(
         'Audiobook queued',
@@ -142,100 +143,95 @@ export function CreateAudiobookModal({
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable className="flex-1 justify-end bg-black/40" onPress={onClose}>
-        <Pressable
-          className="max-h-[85%] rounded-t-3xl bg-background px-5 pb-8 pt-4"
-          onPress={(e) => e.stopPropagation()}>
-          <View className="mb-4 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-foreground">Create audiobook</Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              className="h-9 w-9 items-center justify-center rounded-full bg-muted">
-              <Icon as={X} className="size-4 text-foreground" />
-            </Pressable>
-          </View>
-
-          <Text className="mb-1 text-sm text-muted-foreground">Book</Text>
-          <Text className="mb-4 font-semibold text-foreground">{book.title}</Text>
-
-          <Text className="mb-2 text-sm font-semibold text-foreground">
-            Voice profile · {formatLanguage(book.language)}
-          </Text>
-
-          {loadingVoices ? (
-            <View className="items-center py-8">
-              <AppLoader size={24} />
+    <View className="absolute inset-x-3 bottom-3 z-20 overflow-hidden rounded-2xl border border-white/80">
+      <BlurView intensity={42} tint="light" style={StyleSheet.absoluteFill} />
+      <View className="bg-white/75 p-3">
+        {expanded ? (
+          <>
+            <View className="mb-2 flex-row items-center justify-between">
+              <Text className="text-sm font-semibold text-foreground">
+                Voice profile · {formatLanguage(book.language)}
+              </Text>
+              <Pressable
+                onPress={() => onExpandedChange(false)}
+                hitSlop={8}
+                accessibilityLabel="Close"
+                className="h-8 w-8 items-center justify-center rounded-full border border-border bg-white/70">
+                <Icon as={X} className="size-3.5 text-foreground" />
+              </Pressable>
             </View>
-          ) : readyVoices.length === 0 ? (
-            <View className="mb-4 rounded-2xl border border-border/60 bg-card px-4 py-4">
-              <Text className="text-center text-sm text-muted-foreground">
+
+            {loadingVoices ? (
+              <View className="items-center py-4">
+                <AppLoader size={20} />
+              </View>
+            ) : readyVoices.length === 0 ? (
+              <Text className="mb-3 text-center text-sm text-muted-foreground">
                 {pendingVoices.length > 0
                   ? 'A voice is still processing. It will show up here when it is ready.'
                   : `No ready voices for ${formatReferenceLanguage(bookLanguage)}. Add and process a voice in Profile → My voices first.`}
               </Text>
-            </View>
-          ) : (
-            <View className="mb-4">
-              <Pressable
-                onPress={() => setPickerOpen((open) => !open)}
-                className="flex-row items-center justify-between rounded-2xl border border-border/60 bg-card px-4 py-3">
-                <Text className="text-sm font-medium text-foreground">
-                  {selectedVoice?.label ?? 'Select voice'}
-                </Text>
-                <Icon as={ChevronDown} className="size-4 text-muted-foreground" />
-              </Pressable>
-
-              {pickerOpen ? (
-                <ScrollView
-                  className="mt-2 max-h-48 rounded-2xl border border-border/60 bg-card"
-                  keyboardShouldPersistTaps="handled">
-                  {readyVoices.map((voice) => {
-                    const active = voice.id === selectedVoiceId;
-                    return (
-                      <Pressable
-                        key={voice.id}
-                        onPress={() => {
-                          setSelectedVoiceId(voice.id);
-                          setPickerOpen(false);
-                        }}
-                        className={cn(
-                          'border-b border-border/40 px-4 py-3',
-                          active && 'bg-cotton',
-                        )}>
-                        <Text className="text-sm font-medium text-foreground">
-                          {voice.label}
-                        </Text>
-                        <Text className="text-xs text-muted-foreground">
-                          {formatReferenceLanguage(voice.language)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-              ) : null}
-            </View>
-          )}
-
-          {error ? (
-            <View className="mb-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3">
-              <Text className="text-sm text-destructive">{error}</Text>
-            </View>
-          ) : null}
-
-          <Button
-            className="rounded-full bg-accent"
-            disabled={submitting || loadingVoices || readyVoices.length === 0}
-            onPress={() => void handleGenerate()}>
-            {submitting ? (
-              <AppLoader size={20} color="#ffffff" />
             ) : (
-              <Text className="font-semibold text-accent-foreground">Generate audiobook</Text>
+              <View className="mb-3">
+                <Pressable
+                  onPress={() => setPickerOpen((open) => !open)}
+                  className="flex-row items-center justify-between rounded-2xl border border-border/60 bg-card px-4 py-3">
+                  <Text className="text-sm font-medium text-foreground">
+                    {selectedVoice?.label ?? 'Select voice'}
+                  </Text>
+                  <Icon as={ChevronDown} className="size-4 text-muted-foreground" />
+                </Pressable>
+
+                {pickerOpen ? (
+                  <ScrollView
+                    className="mt-2 max-h-40 rounded-2xl border border-border/60 bg-card"
+                    keyboardShouldPersistTaps="handled">
+                    {readyVoices.map((voice) => {
+                      const active = voice.id === selectedVoiceId;
+                      return (
+                        <Pressable
+                          key={voice.id}
+                          onPress={() => {
+                            setSelectedVoiceId(voice.id);
+                            setPickerOpen(false);
+                          }}
+                          className={cn(
+                            'border-b border-border/40 px-4 py-3',
+                            active && 'bg-cotton',
+                          )}>
+                          <Text className="text-sm font-medium text-foreground">{voice.label}</Text>
+                          <Text className="text-xs text-muted-foreground">
+                            {formatReferenceLanguage(voice.language)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                ) : null}
+              </View>
             )}
+
+            {error ? (
+              <Text className="mb-3 text-sm text-destructive">{error}</Text>
+            ) : null}
+
+            <Button
+              className="rounded-full bg-primary"
+              disabled={submitting || loadingVoices || readyVoices.length === 0}
+              onPress={() => void handleGenerate()}>
+              {submitting ? (
+                <AppLoader size={20} color="#ffffff" />
+              ) : (
+                <Text className="font-semibold text-primary-foreground">Generate audiobook</Text>
+              )}
+            </Button>
+          </>
+        ) : (
+          <Button className="rounded-full bg-primary" onPress={() => onExpandedChange(true)}>
+            <Text className="font-semibold text-primary-foreground">Create audiobook</Text>
           </Button>
-        </Pressable>
-      </Pressable>
-    </Modal>
+        )}
+      </View>
+    </View>
   );
 }

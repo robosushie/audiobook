@@ -7,6 +7,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="voices/index" />
       <Stack.Screen name="voices/new" />
+      <Stack.Screen name="settings" />
     </Stack>
   );
 }
