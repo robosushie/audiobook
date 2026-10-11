@@ -6,6 +6,7 @@ import { useAuth } from '@clerk/expo';
 import * as React from 'react';
 
 const PAGE_SIZE = 8;
+const STATUS_POLL_MS = 8000;
 
 export function useLibraryAudiobooks(status?: string) {
   const { getToken } = useAuth();
@@ -21,11 +22,13 @@ export function useLibraryAudiobooks(status?: string) {
   const requestId = React.useRef(0);
 
   const loadPage = React.useCallback(
-    async (nextPage: number, append: boolean) => {
+    async (nextPage: number, append: boolean, silent = false) => {
       const id = ++requestId.current;
-      if (append) setIsLoadingMore(true);
-      else setIsLoading(true);
-      setError(null);
+      if (!silent) {
+        if (append) setIsLoadingMore(true);
+        else setIsLoading(true);
+        setError(null);
+      }
       try {
         const token = await getTokenRef.current();
         if (!token) throw new Error('Not signed in');
@@ -35,14 +38,22 @@ export function useLibraryAudiobooks(status?: string) {
           status,
         });
         if (id !== requestId.current) return;
-        setAudiobooks((prev) => (append ? [...prev, ...data.items] : data.items));
-        setPage(data.page);
+        setAudiobooks((prev) => {
+          if (!silent) return append ? [...prev, ...data.items] : data.items;
+          const incoming = new Map(data.items.map((item) => [item.id, item]));
+          const merged = prev.map((item) => incoming.get(item.id) ?? item);
+          const seen = new Set(prev.map((item) => item.id));
+          const created = data.items.filter((item) => !seen.has(item.id));
+          const next = [...created, ...merged];
+          return status ? next.filter((item) => item.status === status) : next;
+        });
+        if (!silent) setPage(data.page);
         setTotal(data.total);
       } catch (err) {
-        if (id !== requestId.current) return;
+        if (id !== requestId.current || silent) return;
         setError(err instanceof Error ? err.message : 'Failed to load library');
       } finally {
-        if (id === requestId.current) {
+        if (id === requestId.current && !silent) {
           setIsLoading(false);
           setIsLoadingMore(false);
         }
@@ -54,6 +65,18 @@ export function useLibraryAudiobooks(status?: string) {
   React.useEffect(() => {
     void loadPage(1, false);
   }, [loadPage]);
+
+  const hasPending = audiobooks.some(
+    (item) => item.status === 'queued' || item.status === 'processing',
+  );
+
+  React.useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(() => {
+      void loadPage(1, false, true);
+    }, STATUS_POLL_MS);
+    return () => clearInterval(timer);
+  }, [hasPending, loadPage]);
 
   useUserEventSubscription((message) => {
     if (message.type === 'audiobook.created' || message.type === 'audiobook.updated') {

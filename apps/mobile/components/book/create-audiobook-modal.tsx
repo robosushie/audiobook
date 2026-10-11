@@ -14,7 +14,16 @@ import { ChevronDown, X } from 'lucide-react-native';
 import * as React from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
+
+/** Gap between the dock and the system navigation bar. */
+export const CREATE_AUDIOBOOK_DOCK_GAP = 12;
+
+/** Space the manuscript needs above the collapsed or expanded dock. */
+export function createAudiobookScrollPadding(insetBottom: number, expanded: boolean) {
+  return insetBottom + CREATE_AUDIOBOOK_DOCK_GAP + (expanded ? 268 : 84);
+}
 
 type CreateAudiobookDockProps = {
   book: BookRow;
@@ -29,6 +38,7 @@ export function CreateAudiobookDock({
   onExpandedChange,
   onSuccess,
 }: CreateAudiobookDockProps) {
+  const insets = useSafeAreaInsets();
   const { getToken } = useAuth();
   const getTokenRef = React.useRef(getToken);
   getTokenRef.current = getToken;
@@ -143,7 +153,9 @@ export function CreateAudiobookDock({
   }
 
   return (
-    <View className="absolute inset-x-3 bottom-3 z-20 overflow-hidden rounded-2xl border border-white/80">
+    <View
+      className="absolute inset-x-3 z-20 overflow-hidden rounded-2xl border border-white/80"
+      style={{ bottom: insets.bottom + CREATE_AUDIOBOOK_DOCK_GAP }}>
       <BlurView intensity={42} tint="light" style={StyleSheet.absoluteFill} />
       <View className="bg-white/75 p-3">
         {expanded ? (

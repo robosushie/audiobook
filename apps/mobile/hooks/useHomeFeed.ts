@@ -6,6 +6,8 @@ import type { AudiobookRow, BookRow, PlaybackRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
 import * as React from 'react';
 
+const STATUS_POLL_MS = 8000;
+
 type HomeFeedState = {
   isInitialLoading: boolean;
   isRefreshing: boolean;
@@ -110,6 +112,27 @@ export function useHomeFeed(): HomeFeedState {
       cancelled = true;
     };
   }, [reloadKey]);
+
+  React.useEffect(() => {
+    if (isInitialLoading) return;
+    const timer = setInterval(() => {
+      void (async () => {
+        try {
+          const token = await getTokenRef.current();
+          if (!token) return;
+          const audiobooks = await fetchMyAudiobooks(token, {
+            page: 1,
+            pageSize: 8,
+            status: 'completed',
+          });
+          setMyAudiobooks(audiobooks.items.slice(0, 4));
+        } catch {
+          // The next tick retries. A missed poll should not replace the feed error.
+        }
+      })();
+    }, STATUS_POLL_MS);
+    return () => clearInterval(timer);
+  }, [isInitialLoading]);
 
   return {
     isInitialLoading,

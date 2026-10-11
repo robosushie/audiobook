@@ -1,4 +1,7 @@
-import { CreateAudiobookDock } from '@/components/book/create-audiobook-modal';
+import {
+  CreateAudiobookDock,
+  createAudiobookScrollPadding,
+} from '@/components/book/create-audiobook-modal';
 import { BookCover } from '@/components/home/book-cover';
 import { ScreenHeader } from '@/components/layout/screen-header';
 import { LoadingState } from '@/components/ui/app-loader';
@@ -27,7 +30,7 @@ export default function BookDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: insets.top + 12,
-          paddingBottom: insets.bottom + (dockExpanded ? 280 : 96),
+          paddingBottom: createAudiobookScrollPadding(insets.bottom, dockExpanded),
           paddingHorizontal: 20,
         }}>
         <ScreenHeader title="Book" onBack={() => router.back()} />
