@@ -208,7 +208,7 @@ export function SimulateVoicePage() {
             className={
               tracked.status === "failed"
                 ? "rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                : "rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+                : "rounded-md border border-pulse/40 bg-pulse/20 px-3 py-2 text-sm text-foreground"
             }
           >
             {tracked.label}: {tracked.status}

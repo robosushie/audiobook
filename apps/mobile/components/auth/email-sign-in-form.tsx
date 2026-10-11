@@ -43,15 +43,15 @@ export function EmailSignInForm({ isLoading, onSubmit, onFocus }: EmailSignInFor
       </View>
       <Button
         className={cn(
-          'h-12 w-full rounded-2xl bg-accent shadow-pop active:bg-accent/90',
+          'h-12 w-full rounded-full bg-primary active:bg-primary/90',
           isLoading && 'opacity-50',
         )}
         disabled={isLoading}
         onPress={handleSubmit}>
-        <Text className="font-semibold text-accent-foreground">
+        <Text className="font-semibold text-primary-foreground">
           {isLoading ? 'Sending code…' : 'Continue'}
         </Text>
-        <Icon as={ArrowRight} className="size-4 text-accent-foreground" />
+        <Icon as={ArrowRight} className="size-4 text-primary-foreground" />
       </Button>
     </View>
   );

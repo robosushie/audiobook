@@ -36,7 +36,7 @@ export function LoginFormPanel() {
         <h1 className="text-3xl font-bold leading-tight lg:text-4xl">
           {LOGIN_HEADLINE}
           <br />
-          <span className="text-accent">{LOGIN_HEADLINE_ACCENT}</span>
+          <span className="bg-cotton px-1 text-foreground">{LOGIN_HEADLINE_ACCENT}</span>
         </h1>
         <p className="mt-2 mb-8 text-sm text-muted-foreground lg:text-base">{LOGIN_SUBTITLE}</p>
 

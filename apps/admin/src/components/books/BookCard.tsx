@@ -35,7 +35,7 @@ function CardIconButton({
       title={label}
       onClick={onClick}
       className={cn(
-        "inline-flex h-7 w-7 items-center justify-center rounded-md border bg-card/95 text-foreground shadow-sm transition-colors",
+        "inline-flex h-7 w-7 items-center justify-center rounded-full border bg-card text-foreground transition-colors duration-150",
         "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         variant === "default" && "border-border",
         variant === "danger" && "border-destructive/40 text-destructive hover:bg-destructive/10",
@@ -48,7 +48,7 @@ function CardIconButton({
 
 export function BookCard({ book, onView, onEdit, onDelete }: BookCardProps) {
   return (
-    <article className="flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+    <article className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
       <div className="relative h-32 shrink-0 bg-muted">
         {book.cover_url ? (
           <img src={book.cover_url} alt="" className="h-full w-full object-cover" />

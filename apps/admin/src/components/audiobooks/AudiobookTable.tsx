@@ -121,7 +121,7 @@ export function AudiobookTable({
                       disabled={!canPlay || isLoading}
                       onClick={() => onPlay(row)}
                       className={cn(
-                        "inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
+                        "inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-150",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         canPlay
                           ? isPlaying

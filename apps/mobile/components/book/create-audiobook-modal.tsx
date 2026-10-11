@@ -202,13 +202,9 @@ export function CreateAudiobookModal({
                         }}
                         className={cn(
                           'border-b border-border/40 px-4 py-3',
-                          active && 'bg-accent/10',
+                          active && 'bg-cotton',
                         )}>
-                        <Text
-                          className={cn(
-                            'text-sm font-medium',
-                            active ? 'text-accent' : 'text-foreground',
-                          )}>
+                        <Text className="text-sm font-medium text-foreground">
                           {voice.label}
                         </Text>
                         <Text className="text-xs text-muted-foreground">

@@ -34,7 +34,7 @@ export function ProfileMenuRow({
       className={cn(
         'flex-row items-center rounded-2xl border',
         isAccent
-          ? 'border-transparent bg-accent shadow-pop'
+          ? 'border-transparent bg-primary'
           : 'border-border/60 bg-card active:bg-muted/50',
         disabled && 'opacity-60',
       )}

@@ -1,7 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Text } from '@/components/ui/text';
 import { BRAND } from '@/lib/constants/brand';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as React from 'react';
 import { View } from 'react-native';
 
@@ -28,13 +27,11 @@ export function ProfileHeaderCard({ initials, name, email, imageUrl }: ProfileHe
             </AvatarFallback>
           </Avatar>
         ) : (
-          <LinearGradient
-            colors={[BRAND.loginHeroTop, BRAND.coverGradients.rose[1]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="h-16 w-16 items-center justify-center">
-            <Text className="text-xl font-bold text-accent-foreground">{initials}</Text>
-          </LinearGradient>
+          <View
+            className="h-16 w-16 items-center justify-center"
+            style={{ backgroundColor: BRAND.cotton }}>
+            <Text className="text-xl font-bold text-foreground">{initials}</Text>
+          </View>
         )}
       </View>
       <View className="min-w-0 flex-1">

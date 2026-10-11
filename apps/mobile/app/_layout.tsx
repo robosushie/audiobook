@@ -7,8 +7,15 @@ import { tokenCache } from '@clerk/expo/token-cache';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -54,14 +61,21 @@ SplashScreen.preventAutoHideAsync();
 
 function Routes() {
   const { isSignedIn, isLoaded } = useAuth();
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+  const ready = isLoaded && (fontsLoaded || Boolean(fontError));
 
   React.useEffect(() => {
-    if (isLoaded) {
+    if (ready) {
       SplashScreen.hideAsync();
     }
-  }, [isLoaded]);
+  }, [ready]);
 
-  if (!isLoaded) {
+  if (!ready) {
     return null;
   }
 

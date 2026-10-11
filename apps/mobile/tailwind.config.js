@@ -46,11 +46,18 @@ module.exports = {
         'tag-pink': 'hsl(var(--tag-pink))',
         'tag-green': 'hsl(var(--tag-green))',
         'tag-yellow': 'hsl(var(--tag-yellow))',
+        cotton: 'hsl(var(--cotton))',
+      },
+      fontFamily: {
+        sans: ['Inter_400Regular'],
       },
       borderRadius: {
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        md: 'var(--radius)',
+        sm: '2px',
+        xl: '6px',
+        '2xl': '6px',
+        '3xl': '6px',
       },
       borderWidth: {
         hairline: hairlineWidth(),
@@ -70,13 +77,24 @@ module.exports = {
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
       boxShadow: {
-        pop: 'var(--shadow-pop)',
-        soft: '0 4px 20px -4px rgb(0 0 0 / 0.1)',
+        pop: '0 0 #0000',
+        soft: '0 0 #0000',
       },
     },
   },
   future: {
     hoverOnlyWhenSupported: true,
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    function interWeights({ addUtilities }) {
+      addUtilities({
+        '.font-normal': { fontFamily: 'Inter_400Regular', fontWeight: '400' },
+        '.font-medium': { fontFamily: 'Inter_500Medium', fontWeight: '400' },
+        '.font-semibold': { fontFamily: 'Inter_600SemiBold', fontWeight: '400' },
+        '.font-bold': { fontFamily: 'Inter_700Bold', fontWeight: '400' },
+        '.font-extrabold': { fontFamily: 'Inter_700Bold', fontWeight: '400' },
+      });
+    },
+  ],
 };

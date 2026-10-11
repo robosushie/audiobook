@@ -21,7 +21,7 @@ export function BrowseCategoryCard({ category, coverUrl, onPress }: BrowseCatego
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         className="h-full p-3">
-        <Text className="text-base font-bold text-white">{category.label}</Text>
+        <Text className="text-base font-bold text-foreground">{category.label}</Text>
         <View className="absolute -bottom-2 -right-2 rotate-12 shadow-pop">
           <BookCover
             coverUrl={coverUrl}

@@ -27,7 +27,7 @@ export function NonAdminAccessScreen({
           <ShieldAlert className="h-7 w-7" strokeWidth={1.75} aria-hidden />
         </div>
 
-        <h1 className="mt-6 font-display text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="mt-6 font-display text-2xl font-semibold tracking-wide text-foreground">
           {title}
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{description}</p>

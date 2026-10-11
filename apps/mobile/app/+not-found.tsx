@@ -15,7 +15,7 @@ export default function NotFoundScreen() {
             // Expo typed routes omit the tabs group path until regenerated.
             router.replace('/(tabs)' as never);
           }}>
-          <Text className="font-semibold text-accent">Go to home screen</Text>
+          <Text className="font-semibold text-foreground underline">Go to home screen</Text>
         </Pressable>
       </View>
     </>

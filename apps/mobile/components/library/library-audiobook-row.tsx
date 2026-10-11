@@ -102,13 +102,13 @@ export function LibraryAudiobookRow({ item }: LibraryAudiobookRowProps) {
       <Pressable
         onPress={() => void handlePlay()}
         disabled={!canPlay || playLoading || inProgress || failed}
-        className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent shadow-soft disabled:opacity-35">
+        className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary disabled:opacity-35">
         {playLoading || (isLoadingAudio && playingAudiobookId === item.id) ? (
           <AppLoader size={18} color="#ffffff" />
         ) : (
           <Icon
             as={showPause ? Pause : Play}
-            className="ml-0.5 size-4 fill-accent-foreground text-accent-foreground"
+            className="ml-0.5 size-4 fill-primary-foreground text-primary-foreground"
           />
         )}
       </Pressable>

@@ -27,7 +27,7 @@ export function AudiobookActivityChart({ data }: AudiobookActivityChartProps) {
   }));
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <div className="rounded-md border border-border bg-card p-5">
       <h3 className="text-sm font-semibold">Audiobook generations</h3>
       <p className="mt-0.5 text-xs text-muted-foreground">Last 30 days</p>
       <div className="mt-6 h-64 w-full">
@@ -59,7 +59,7 @@ export function AudiobookActivityChart({ data }: AudiobookActivityChartProps) {
                   : ""
               }
             />
-            <Bar dataKey="count" fill={theme.colors.chart} radius={[4, 4, 0, 0]} maxBarSize={32} />
+            <Bar dataKey="count" fill={theme.colors.chart} radius={[0, 0, 0, 0]} maxBarSize={32} />
           </BarChart>
         </ResponsiveContainer>
       </div>

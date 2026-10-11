@@ -2,10 +2,10 @@ import { cn } from "@/lib/utils";
 import type { AudiobookStatus } from "@/types/api";
 
 const STATUS_STYLES: Record<AudiobookStatus, string> = {
-  queued: "bg-amber-50 text-amber-800 ring-amber-200",
-  processing: "bg-sky-50 text-sky-800 ring-sky-200",
-  completed: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  failed: "bg-red-50 text-red-700 ring-red-200",
+  queued: "bg-solar/50 text-foreground",
+  processing: "bg-signal/15 text-foreground",
+  completed: "bg-pulse/25 text-foreground",
+  failed: "bg-destructive/10 text-destructive",
 };
 
 const STATUS_LABELS: Record<AudiobookStatus, string> = {
@@ -21,13 +21,13 @@ type AudiobookStatusBadgeProps = {
 
 export function AudiobookStatusBadge({ status }: AudiobookStatusBadgeProps) {
   const key = status as AudiobookStatus;
-  const style = STATUS_STYLES[key] ?? "bg-zinc-100 text-zinc-600 ring-zinc-200";
+  const style = STATUS_STYLES[key] ?? "bg-muted text-muted-foreground";
   const label = STATUS_LABELS[key] ?? status;
 
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1",
+        "inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium",
         style,
       )}
     >

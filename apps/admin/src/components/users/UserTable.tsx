@@ -34,7 +34,7 @@ function IconButton({
       title={label}
       onClick={onClick}
       className={cn(
-        "inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-card text-foreground transition-colors",
+        "inline-flex h-9 w-9 items-center justify-center rounded-full border bg-card text-foreground transition-colors duration-150",
         "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         variant === "default" && "border-border",
         variant === "danger" &&

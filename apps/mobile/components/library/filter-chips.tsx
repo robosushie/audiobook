@@ -28,16 +28,10 @@ export function LibraryFilterChips({ value, onChange, disabled }: LibraryFilterC
             onPress={() => onChange(filter.value)}
             className={cn(
               'h-9 items-center justify-center rounded-full px-4',
-              active ? 'bg-accent' : 'bg-card',
+              active ? 'bg-cotton' : 'bg-card',
               disabled && 'opacity-50',
             )}>
-            <Text
-              className={cn(
-                'text-xs font-semibold',
-                active ? 'text-accent-foreground' : 'text-foreground',
-              )}>
-              {filter.label}
-            </Text>
+            <Text className="text-xs font-semibold text-foreground">{filter.label}</Text>
           </Pressable>
         );
       })}

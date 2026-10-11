@@ -80,7 +80,7 @@ export function SignInForm() {
           bounces={false}>
           <View className="z-10">
             <View className="mb-4 flex-row items-center gap-2">
-              <View className="h-9 w-9 items-center justify-center rounded-2xl bg-card shadow-pop">
+              <View className="h-9 w-9 items-center justify-center rounded-md border border-border bg-card">
                 <Icon
                   as={Headphones}
                   className="size-4 text-secondary-foreground"
@@ -93,7 +93,7 @@ export function SignInForm() {
             <Text className="text-3xl font-bold leading-tight">
               {LOGIN_HEADLINE}
               {'\n'}
-              in your <Text className="text-3xl font-bold text-accent">voice.</Text>
+              in your <Text className="bg-cotton text-3xl font-bold text-foreground">voice.</Text>
             </Text>
             <Text
               className={cn(

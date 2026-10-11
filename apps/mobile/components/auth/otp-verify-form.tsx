@@ -65,15 +65,15 @@ export function OtpVerifyForm({
         </View>
         <Button
           className={cn(
-            'h-12 w-full rounded-2xl bg-accent shadow-pop active:bg-accent/90',
+            'h-12 w-full rounded-full bg-primary active:bg-primary/90',
             (isLoading || code.length < 6) && 'opacity-50',
           )}
           disabled={isLoading || code.length < 6}
           onPress={handleSubmit}>
-          <Text className="font-semibold text-accent-foreground">
+          <Text className="font-semibold text-primary-foreground">
             {isLoading ? 'Verifying…' : 'Verify & sign in'}
           </Text>
-          <Icon as={ArrowRight} className="size-4 text-accent-foreground" />
+          <Icon as={ArrowRight} className="size-4 text-primary-foreground" />
         </Button>
       </View>
 

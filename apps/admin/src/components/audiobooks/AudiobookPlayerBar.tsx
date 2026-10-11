@@ -50,7 +50,7 @@ export function AudiobookPlayerBar({
             type="button"
             aria-label="Close player"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>

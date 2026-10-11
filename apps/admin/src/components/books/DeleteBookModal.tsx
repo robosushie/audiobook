@@ -50,7 +50,7 @@ export function DeleteBookModal({ book, onClose, onSuccess }: DeleteBookModalPro
           <Button
             type="button"
             disabled={loading}
-            className="rounded-lg border border-destructive bg-card px-4 py-2 text-destructive hover:bg-destructive/10"
+            className="rounded-full border border-destructive bg-card px-6 py-3 text-destructive hover:bg-destructive/10"
             onClick={() => void handleDelete()}
           >
             {loading ? "Deleting…" : "Delete"}

@@ -12,10 +12,10 @@ export function Badge({ children, variant = "default", className }: BadgeProps) 
   return (
     <span
       className={cn(
-        "inline-flex max-w-full truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight",
-        variant === "default" && "bg-primary/10 text-primary ring-1 ring-primary/20",
-        variant === "muted" && "bg-muted text-muted-foreground ring-1 ring-border",
-        variant === "accent" && "bg-accent/15 text-accent ring-1 ring-accent/25",
+        "inline-flex max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight",
+        variant === "default" && "bg-primary text-primary-foreground",
+        variant === "muted" && "bg-muted text-muted-foreground",
+        variant === "accent" && "bg-primary text-primary-foreground",
         className,
       )}
     >

@@ -115,19 +115,19 @@ function AudiobookRowCard({
           onPress={onPlay}
           disabled={!canPlay || isLoading}
           hitSlop={8}
-          className="h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent disabled:opacity-40">
+          className="h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary disabled:opacity-40">
           {isLoading ? (
             <AppLoader size={18} color="#ffffff" />
           ) : (
             <Icon
               as={isActive && isPlaying ? Pause : Play}
-              className="size-5 fill-accent-foreground text-accent-foreground"
+              className="size-5 fill-primary-foreground text-primary-foreground"
             />
           )}
         </Pressable>
       </View>
       <View className="h-1 bg-muted">
-        <View className="h-full bg-accent" style={{ width: `${percent}%` }} />
+        <View className="h-full bg-tag-blue" style={{ width: `${percent}%` }} />
       </View>
     </Pressable>
   );

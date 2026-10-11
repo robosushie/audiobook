@@ -157,15 +157,9 @@ export default function NewVoiceScreen() {
                     onPress={() => setLanguage(item.value)}
                     className={cn(
                       'h-9 items-center justify-center rounded-full px-4',
-                      active ? 'bg-accent' : 'bg-card',
+                      active ? 'bg-cotton' : 'bg-card',
                     )}>
-                    <Text
-                      className={cn(
-                        'text-xs font-semibold',
-                        active ? 'text-accent-foreground' : 'text-foreground',
-                      )}>
-                      {item.label}
-                    </Text>
+                    <Text className="text-xs font-semibold text-foreground">{item.label}</Text>
                   </Pressable>
                 );
               })}

@@ -21,12 +21,12 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           sceneStyle: { backgroundColor: BRAND.background },
-          tabBarActiveTintColor: THEME.accent,
+          tabBarActiveTintColor: THEME.foreground,
           tabBarInactiveTintColor: THEME.mutedForeground,
           tabBarLabel: ({ focused, children }) => (
             <Text
               className="text-[11px] font-medium"
-              style={{ color: focused ? THEME.accent : THEME.mutedForeground }}>
+              style={{ color: focused ? THEME.foreground : THEME.mutedForeground }}>
               {children}
             </Text>
           ),
@@ -38,9 +38,9 @@ export default function TabLayout() {
             height: tabBarHeight,
             paddingTop: 6,
             paddingBottom: insets.bottom,
-            backgroundColor: BRAND.background,
-            borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: 'rgba(0, 0, 0, 0.08)',
+            backgroundColor: BRAND.card,
+            borderTopWidth: 1,
+            borderTopColor: BRAND.background,
             elevation: 0,
           },
         }}>
@@ -49,12 +49,14 @@ export default function TabLayout() {
           options={{
             title: 'Home',
             tabBarIcon: ({ color, focused }) => (
-              <Icon
-                as={Home}
-                className="size-5"
-                color={color}
-                fill={focused ? color : 'transparent'}
-              />
+              <TabIcon focused={focused}>
+                <Icon
+                  as={Home}
+                  className="size-5"
+                  color={color}
+                  fill={focused ? color : 'transparent'}
+                />
+              </TabIcon>
             ),
           }}
         />
@@ -62,21 +64,33 @@ export default function TabLayout() {
           name="search"
           options={{
             title: 'Search',
-            tabBarIcon: ({ color }) => <Icon as={Search} className="size-5" color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon focused={focused}>
+                <Icon as={Search} className="size-5" color={color} />
+              </TabIcon>
+            ),
           }}
         />
         <Tabs.Screen
           name="library"
           options={{
             title: 'Library',
-            tabBarIcon: ({ color }) => <Icon as={BookOpen} className="size-5" color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon focused={focused}>
+                <Icon as={BookOpen} className="size-5" color={color} />
+              </TabIcon>
+            ),
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
             title: 'Profile',
-            tabBarIcon: ({ color }) => <Icon as={User} className="size-5" color={color} />,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon focused={focused}>
+                <Icon as={User} className="size-5" color={color} />
+              </TabIcon>
+            ),
           }}
         />
         </Tabs>
@@ -90,4 +104,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BRAND.background,
   },
+  tabIcon: {
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+  },
 });
+
+function TabIcon({ focused, children }: { focused: boolean; children: React.ReactNode }) {
+  return (
+    <View
+      style={[
+        styles.tabIcon,
+        { backgroundColor: focused ? BRAND.cotton : 'transparent' },
+      ]}>
+      {children}
+    </View>
+  );
+}

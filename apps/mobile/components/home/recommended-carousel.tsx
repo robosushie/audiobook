@@ -1,23 +1,16 @@
-import { BookCover } from '@/components/home/book-cover';
 import { SectionHeader } from '@/components/home/section-header';
 import { AppLoader } from '@/components/ui/app-loader';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { THEME } from '@/lib/theme';
+import { BRAND } from '@/lib/constants/brand';
 import { formatLanguage } from '@/lib/format';
+import { THEME } from '@/lib/theme';
 import type { BookRow } from '@/types/api';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles } from 'lucide-react-native';
 import * as React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-const CARD_GRADIENTS = [
-  ['rgba(24, 24, 27, 0.85)', 'rgba(24, 24, 27, 0.35)'],
-  ['rgba(120, 80, 40, 0.85)', 'rgba(120, 80, 40, 0.35)'],
-  ['rgba(40, 90, 120, 0.85)', 'rgba(40, 90, 120, 0.35)'],
-  ['rgba(90, 40, 80, 0.85)', 'rgba(90, 40, 80, 0.35)'],
-  ['rgba(60, 100, 70, 0.85)', 'rgba(60, 100, 70, 0.35)'],
-] as const;
+const CARD_COLORS = [BRAND.signal, BRAND.pulse, BRAND.hot, BRAND.solar, '#9664d7'] as const;
 
 type RecommendedCarouselProps = {
   books: BookRow[];
@@ -64,7 +57,7 @@ export function RecommendedCarousel({
             <RecommendedCard
               key={book.id}
               book={book}
-              gradient={CARD_GRADIENTS[index % CARD_GRADIENTS.length]}
+              color={CARD_COLORS[index % CARD_COLORS.length]}
               onPress={() => onBookPress?.(book)}
             />
           ))}
@@ -76,11 +69,11 @@ export function RecommendedCarousel({
 
 function RecommendedCard({
   book,
-  gradient,
+  color,
   onPress,
 }: {
   book: BookRow;
-  gradient: readonly [string, string];
+  color: string;
   onPress: () => void;
 }) {
   const subtitle = book.genre
@@ -88,19 +81,8 @@ function RecommendedCard({
     : formatLanguage(book.language);
 
   return (
-    <Pressable onPress={onPress} className="h-56 w-44 overflow-hidden rounded-3xl shadow-pop">
-      <View className="relative h-full w-full">
-        <BookCover
-          coverUrl={book.cover_url}
-          seed={book.id}
-          className="absolute inset-0 h-full w-full opacity-60"
-          roundedClassName="rounded-none"
-        />
-        <LinearGradient
-          colors={[gradient[0], gradient[1]]}
-          className="absolute inset-0"
-        />
-        <View className="absolute inset-0 justify-between p-4">
+    <Pressable onPress={onPress} className="h-56 w-44 overflow-hidden">
+      <View className="h-full w-full justify-between p-4" style={{ backgroundColor: color }}>
           <View className="flex-row items-center gap-1 self-start rounded-full bg-background/90 px-2 py-1">
             <Icon as={Sparkles} className="size-2.5 text-foreground" />
             <Text className="text-[10px] font-bold uppercase tracking-wider text-foreground">
@@ -108,14 +90,13 @@ function RecommendedCard({
             </Text>
           </View>
           <View>
-            <Text className="text-base font-bold leading-tight text-white" numberOfLines={2}>
+            <Text className="text-base font-bold leading-tight text-foreground" numberOfLines={2}>
               {book.title}
             </Text>
-            <Text className="text-xs capitalize text-white/80" numberOfLines={1}>
+            <Text className="text-xs capitalize text-foreground/70" numberOfLines={1}>
               {subtitle}
             </Text>
           </View>
-        </View>
       </View>
     </Pressable>
   );

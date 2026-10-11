@@ -5,9 +5,10 @@ import * as React from 'react';
 import { Image, View, type ImageStyle, type StyleProp } from 'react-native';
 
 const PLACEHOLDER_GRADIENTS = [
-  BRAND.coverGradients.amber,
-  BRAND.coverGradients.rose,
-  BRAND.coverGradients.teal,
+  BRAND.coverGradients.blue,
+  BRAND.coverGradients.green,
+  BRAND.coverGradients.pink,
+  BRAND.coverGradients.yellow,
 ] as const;
 
 type BookCoverProps = {

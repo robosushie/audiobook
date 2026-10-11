@@ -54,7 +54,7 @@ export function Modal({
             <Button
               type="button"
               variant="ghost"
-              className="h-8 w-8 shrink-0 rounded-lg p-0"
+              className="h-8 w-8 shrink-0 rounded-full p-0"
               onClick={onClose}
               aria-label="Close"
             >

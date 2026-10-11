@@ -2,19 +2,20 @@
 
 export const theme = {
   colors: {
-    background: "#faf8f5",
-    primary: "#18181b",
-    primaryForeground: "#fafafa",
-    mutedForeground: "#71717a",
-    border: "#e8e4df",
-    chart: "#404040",
-    chartMuted: "#f0ebe6",
+    background: "#e5e7eb",
+    primary: "#000000",
+    primaryForeground: "#ffffff",
+    mutedForeground: "#666666",
+    border: "#e5e7eb",
+    chart: "#1871da",
+    chartMuted: "#f7f7f7",
+    pulse: "#1ec072",
   },
   layout: {
     sidebarWidth: "16rem",
   },
   radius: {
-    lg: "0.5rem",
-    xl: "0.75rem",
+    lg: "6px",
+    xl: "6px",
   },
 } as const;

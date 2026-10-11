@@ -45,7 +45,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="border-b border-border px-5 py-6">
-        <p className="font-display text-2xl font-semibold tracking-tight text-foreground">
+        <p className="font-display text-2xl font-semibold tracking-wide text-foreground">
           {APP_NAME}
         </p>
         <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
@@ -89,7 +89,7 @@ export function Sidebar() {
         <SignOutButton>
           <button
             type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-card py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary/90"
           >
             <LogOut className="h-4 w-4" />
             Sign out
