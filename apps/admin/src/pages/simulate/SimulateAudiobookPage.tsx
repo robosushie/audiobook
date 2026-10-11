@@ -81,11 +81,11 @@ export function SimulateAudiobookPage() {
     setLoading(true);
     setError(null);
     try {
-      const [allBooks, userVoices] = await Promise.all([
-        fetchBooks(request),
+      const [catalogue, userVoices] = await Promise.all([
+        fetchBooks(request, { page: 1, pageSize: 50 }),
         fetchVoiceProfiles(request, { language }),
       ]);
-      setBooks(allBooks);
+      setBooks(catalogue.items);
       setVoices(userVoices);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");

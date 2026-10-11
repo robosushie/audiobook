@@ -9,11 +9,12 @@ import { AudiobookTable } from "@/components/audiobooks/AudiobookTable";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Pager } from "@/components/ui/pager";
 import { useApi } from "@/hooks/useApi";
 import { useUserEventSubscription } from "@/contexts/user-events";
 import { formatUserName } from "@/lib/user";
 import type { AudiobookSSEPayload } from "@/lib/sse/types";
-import type { AdminAudiobookRow, AudiobookStatusFilter, UserRow } from "@/types/api";
+import type { AdminAudiobookRow, AudiobookStatus, AudiobookStatusFilter, UserRow } from "@/types/api";
 
 export function AudiobooksPage() {
   const { request } = useApi();
@@ -23,6 +24,9 @@ export function AudiobooksPage() {
   const [accountFilter, setAccountFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<AudiobookStatusFilter>("queued_completed");
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<AdminAudiobookRow | null>(null);
@@ -30,25 +34,37 @@ export function AudiobooksPage() {
   const [audioLoading, setAudioLoading] = useState(false);
   const [playLoadingId, setPlayLoadingId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setPage(1);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
+
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     setError(null);
     try {
-      const [rows, accountRows] = await Promise.all([
-        fetchAdminAudiobooks(
-          request,
-          accountFilter === "all" ? undefined : { userId: accountFilter },
-        ),
+      const [result, accountRows] = await Promise.all([
+        fetchAdminAudiobooks(request, {
+          userId: accountFilter === "all" ? undefined : accountFilter,
+          statuses: statusesFor(statusFilter),
+          q: debouncedQuery || undefined,
+          page,
+          pageSize: 8,
+        }),
         fetchUsers(request, "regular"),
       ]);
-      setAudiobooks(rows);
+      setAudiobooks(result.items);
+      setTotal(result.total);
       setUsers(accountRows);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load audiobooks");
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [request, accountFilter]);
+  }, [accountFilter, debouncedQuery, page, request, statusFilter]);
 
   useEffect(() => {
     void load();
@@ -98,26 +114,6 @@ export function AudiobooksPage() {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
   }, [audioUrl]);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return audiobooks.filter((row) => {
-      if (statusFilter === "queued_completed") {
-        if (row.status !== "queued" && row.status !== "completed") return false;
-      } else if (statusFilter !== "all" && row.status !== statusFilter) {
-        return false;
-      }
-
-      if (!q) return true;
-      const userName = row.user_name ? formatUserName(row.user_name).toLowerCase() : "";
-      return (
-        (row.book_title ?? "").toLowerCase().includes(q) ||
-        (row.user_email ?? "").toLowerCase().includes(q) ||
-        userName.includes(q) ||
-        row.status.toLowerCase().includes(q)
-      );
-    });
-  }, [audiobooks, query, statusFilter]);
 
   const closePlayer = useCallback(() => {
     if (audioUrl) URL.revokeObjectURL(audioUrl);
@@ -183,7 +179,10 @@ export function AudiobooksPage() {
         <select
           className="h-10 rounded-lg border border-border bg-card px-3 text-sm lg:w-64"
           value={accountFilter}
-          onChange={(e) => setAccountFilter(e.target.value)}
+          onChange={(e) => {
+            setAccountFilter(e.target.value);
+            setPage(1);
+          }}
         >
           <option value="all">All accounts</option>
           {users.map((user) => (
@@ -196,7 +195,10 @@ export function AudiobooksPage() {
         <select
           className="h-10 rounded-lg border border-border bg-card px-3 text-sm lg:w-52"
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as AudiobookStatusFilter)}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as AudiobookStatusFilter);
+            setPage(1);
+          }}
         >
           <option value="queued_completed">Queued & completed</option>
           <option value="all">All statuses</option>
@@ -214,12 +216,14 @@ export function AudiobooksPage() {
       ) : null}
 
       <AudiobookTable
-        audiobooks={filtered}
+        audiobooks={audiobooks}
         loading={loading}
         playingId={playing?.id ?? null}
         playLoadingId={playLoadingId}
         onPlay={(row) => void handlePlay(row)}
       />
+
+      <Pager page={page} pageSize={8} total={total} onPageChange={setPage} />
 
       <AudiobookPlayerBar
         audiobook={playing}
@@ -229,4 +233,10 @@ export function AudiobooksPage() {
       />
     </div>
   );
+}
+
+function statusesFor(filter: AudiobookStatusFilter): AudiobookStatus[] | undefined {
+  if (filter === "all") return undefined;
+  if (filter === "queued_completed") return ["queued", "completed"];
+  return [filter];
 }

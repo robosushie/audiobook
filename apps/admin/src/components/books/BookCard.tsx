@@ -2,6 +2,7 @@ import { BookOpen, Eye, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { formatBookGenre } from "@/constants/genres";
+import { resolveCoverUrl } from "@/lib/covers";
 import { formatReferenceLanguage } from "@/constants/languages";
 import { cn } from "@/lib/utils";
 import type { BookRow } from "@/types/api";
@@ -50,8 +51,12 @@ export function BookCard({ book, onView, onEdit, onDelete }: BookCardProps) {
   return (
     <article className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
       <div className="relative h-32 shrink-0 bg-muted">
-        {book.cover_url ? (
-          <img src={book.cover_url} alt="" className="h-full w-full object-cover" />
+        {resolveCoverUrl(book.cover_url, book.id) ? (
+          <img
+            src={resolveCoverUrl(book.cover_url, book.id) ?? undefined}
+            alt=""
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
             <BookOpen className="h-8 w-8 opacity-40" />

@@ -13,6 +13,7 @@ from src.lib.module.jobs.worker import run_worker
 from src.lib.schemas.fastapi import Middleware
 from src.lib.schemas.fastapi import Server as FastAPIServer
 from src.services.api.routes.audiobooks import router as audiobooks_router
+from src.services.api.routes.books import public_router as books_public_router
 from src.services.api.routes.books import router as books_router
 from src.services.api.routes.events import router as events_router
 from src.services.api.routes.playbacks import router as playbacks_router
@@ -71,6 +72,7 @@ app.include_router(
     prefix="/api",
     dependencies=[Depends(admin_auth)],
 )
+app.include_router(books_public_router, prefix="/api")
 app.include_router(
     books_router,
     prefix="/api",

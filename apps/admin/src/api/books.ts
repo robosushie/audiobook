@@ -1,8 +1,29 @@
 import { apiUpload } from "@/api/client";
-import type { BookRow, BookUpdateBody } from "@/types/api";
+import type { BookRow, BookUpdateBody, ListPage, ReferenceLanguage } from "@/types/api";
 
-export function fetchBooks(request: <T>(path: string, init?: RequestInit) => Promise<T>) {
-  return request<BookRow[]>("/api/books/");
+export type BookListParams = {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  genres?: string[];
+  languages?: ReferenceLanguage[];
+  activeOnly?: boolean;
+  trending?: boolean;
+};
+
+export function fetchBooks(
+  request: <T>(path: string, init?: RequestInit) => Promise<T>,
+  params?: BookListParams,
+) {
+  const search = new URLSearchParams();
+  search.set("page", String(params?.page ?? 1));
+  search.set("page_size", String(params?.pageSize ?? 8));
+  if (params?.q) search.set("q", params.q);
+  for (const genre of params?.genres ?? []) search.append("genre", genre);
+  for (const language of params?.languages ?? []) search.append("language", language);
+  if (params?.activeOnly === false) search.set("active_only", "false");
+  if (params?.trending) search.set("trending", "true");
+  return request<ListPage<BookRow>>(`/api/books/?${search.toString()}`);
 }
 
 export async function createBookWithContent(token: string, formData: FormData) {

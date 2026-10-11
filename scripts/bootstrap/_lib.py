@@ -7,7 +7,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from clerk_backend_api import Clerk
 from clerk_backend_api.models.clerkerrors import ClerkErrors
@@ -18,7 +18,7 @@ from src.enums.auth import AuthProvider, AuthRole
 from src.enums.content import BookCategory
 from src.enums.language import Language
 from src.enums.user import Gender
-from src.lib.feature.book.content import upload_manuscript
+from src.lib.feature.book.content import upload_cover, upload_manuscript
 from src.lib.schemas.common import UserName
 from src.models.content.book import Book
 from src.models.content.reference import Reference
@@ -376,6 +376,20 @@ def _author_json(record: dict[str, Any]) -> dict[str, str | None]:
     ).model_dump(mode="json")
 
 
+def _upload_cover(book_id: UUID, record: dict[str, Any]) -> str | None:
+    """Upload ``data/covers/<stem>-256.jpg`` and ``<stem>-1024.jpg``."""
+    cover_name = record.get("cover")
+    if not cover_name:
+        return None
+    stem = Path(str(cover_name)).stem
+    thumb_path = DATA_DIR / "covers" / f"{stem}-256.jpg"
+    full_path = DATA_DIR / "covers" / f"{stem}-1024.jpg"
+    if not thumb_path.is_file() or not full_path.is_file():
+        msg = f"Bootstrap covers not found for {stem}"
+        raise FileNotFoundError(msg)
+    return upload_cover(book_id, thumb_path.read_bytes(), full_path.read_bytes())
+
+
 def sync_book(session: Session, record: dict[str, Any]) -> str:
     """Create or refresh one catalogue book and upload its manuscript."""
     title = str(record["title"]).strip()
@@ -390,6 +404,7 @@ def sync_book(session: Session, record: dict[str, Any]) -> str:
     ).scalar_one_or_none()
     book_id = existing.id if existing is not None else uuid4()
     content_url = upload_manuscript(book_id, manuscript)
+    cover_url = _upload_cover(book_id, record)
     raw_categories = record.get("categories") or []
     categories = [BookCategory(str(item).strip().lower()) for item in raw_categories]
     genre = record.get("genre")
@@ -404,6 +419,8 @@ def sync_book(session: Session, record: dict[str, Any]) -> str:
         existing.age_min = int(age_min) if age_min is not None else None
         existing.age_max = int(age_max) if age_max is not None else None
         existing.content_url = content_url
+        if cover_url is not None:
+            existing.cover_url = cover_url
         existing.is_active = bool(record.get("is_active", True))
         existing.is_trending = bool(record.get("is_trending", False))
         existing.categories = categories
@@ -421,6 +438,7 @@ def sync_book(session: Session, record: dict[str, Any]) -> str:
         age_min=int(age_min) if age_min is not None else None,
         age_max=int(age_max) if age_max is not None else None,
         content_url=content_url,
+        cover_url=cover_url,
         is_active=bool(record.get("is_active", True)),
         is_trending=bool(record.get("is_trending", False)),
         categories=categories,

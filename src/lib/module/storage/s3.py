@@ -60,6 +60,12 @@ def book_content_object_path(book_id: UUID) -> str:
     return f"{book_id}/content.txt"
 
 
+def book_cover_object_path(book_id: UUID, size: str = "thumb") -> str:
+    """Object key for a catalogue cover. ``thumb`` is 256px, ``full`` is 1024px."""
+    name = "cover-1024.jpg" if size == "full" else "cover-256.jpg"
+    return f"{book_id}/{name}"
+
+
 def download_bytes(bucket: str, object_path: str) -> bytes:
     """Read an object from object storage."""
     try:
@@ -90,6 +96,16 @@ def download_voice(user_id: UUID, voice_profile_id: UUID) -> bytes:
 def download_book_content(book_id: UUID) -> bytes:
     """Download manuscript text from BOOK_BUCKET."""
     return download_bytes(BOOK_BUCKET, book_content_object_path(book_id))
+
+
+def download_book_cover(book_id: UUID, size: str = "thumb") -> bytes:
+    """Download a catalogue cover. Falls back to the legacy PNG if needed."""
+    try:
+        return download_bytes(BOOK_BUCKET, book_cover_object_path(book_id, size))
+    except RuntimeError:
+        if size != "thumb":
+            return download_bytes(BOOK_BUCKET, book_cover_object_path(book_id, "thumb"))
+        return download_bytes(BOOK_BUCKET, f"{book_id}/cover.png")
 
 
 def delete_object(bucket: str, object_path: str) -> None:
@@ -164,4 +180,14 @@ def upload_book_content(book_id: UUID, data: bytes) -> str:
         book_content_object_path(book_id),
         data,
         content_type="text/plain; charset=utf-8",
+    )
+
+
+def upload_book_cover(book_id: UUID, data: bytes, *, size: str = "thumb") -> str:
+    """Upload a JPEG catalogue cover. ``size`` is ``thumb`` or ``full``."""
+    return upload_bytes(
+        BOOK_BUCKET,
+        book_cover_object_path(book_id, size),
+        data,
+        content_type="image/jpeg",
     )

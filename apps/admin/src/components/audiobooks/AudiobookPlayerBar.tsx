@@ -1,6 +1,7 @@
 import { Loader2, Pause, Play, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { resolveCoverUrl } from "@/lib/covers";
 import { formatDuration } from "@/lib/format";
 import { theme } from "@/constants/theme";
 import type { AdminAudiobookRow } from "@/types/api";
@@ -44,9 +45,9 @@ export function AudiobookPlayerBar({
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
       <div className="pointer-events-auto flex w-full max-w-xl items-center gap-2 rounded-2xl border border-white/80 bg-white/75 px-2 py-1.5 shadow-sm backdrop-blur">
-        {audiobook.book_cover_url ? (
+        {resolveCoverUrl(audiobook.book_cover_url, audiobook.book_id) ? (
           <img
-            src={audiobook.book_cover_url}
+            src={resolveCoverUrl(audiobook.book_cover_url, audiobook.book_id) ?? undefined}
             alt=""
             className="h-10 w-10 shrink-0 rounded-md object-cover"
           />

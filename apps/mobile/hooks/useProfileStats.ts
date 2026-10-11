@@ -1,4 +1,5 @@
 import { fetchMyAudiobooks } from '@/api/audiobooks';
+import type { AudiobookRow } from '@/types/api';
 import { fetchVoiceProfiles } from '@/api/voice';
 import { useUserEventSubscription } from '@/contexts/user-events';
 import { useAuth } from '@clerk/expo';
@@ -28,7 +29,7 @@ export function useProfileStats() {
       if (!token) return;
 
       const [audiobooks, voices] = await Promise.all([
-        fetchMyAudiobooks(token),
+        fetchEveryAudiobook(token),
         fetchVoiceProfiles(token),
       ]);
 
@@ -66,4 +67,18 @@ export function useProfileStats() {
   }, [load]);
 
   return { stats, isLoading };
+}
+
+async function fetchEveryAudiobook(token: string) {
+  const all: AudiobookRow[] = [];
+  let page = 1;
+  let total = Number.POSITIVE_INFINITY;
+  while (all.length < total) {
+    const data = await fetchMyAudiobooks(token, { page, pageSize: 8 });
+    total = data.total;
+    all.push(...data.items);
+    if (data.items.length === 0) break;
+    page += 1;
+  }
+  return all;
 }

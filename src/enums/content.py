@@ -12,8 +12,6 @@ class BookCategory(StrEnum):
     FANTASY = "fantasy"
     SCIENCE_FICTION = "science_fiction"
     MYSTERY = "mystery"
-    HORROR = "horror"
     BIOGRAPHY = "biography"
     HISTORY = "history"
-    RELIGION = "religion"
     OTHER = "other"

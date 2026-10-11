@@ -4,7 +4,8 @@ import asyncio
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, status
-from sqlalchemy import select
+from fastapi.responses import RedirectResponse, Response
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.enums.auth import AuthRole
@@ -12,13 +13,15 @@ from src.enums.language import Language
 from src.lib.auth.clerk import create_authorization
 from src.lib.db import get_session
 from src.lib.feature.book.content import upload_manuscript
-from src.lib.module.storage.local import download_book_content
+from src.lib.module.storage.local import download_book_content, download_book_cover
 from src.lib.schemas.book import BookContentRead
 from src.lib.schemas.common import UserName
+from src.lib.schemas.page import Page
 from src.models.content.book import Book, BookCreate, BookRead, BookUpdate
 
 TAG = "Books"
 router = APIRouter(prefix="/books", tags=[TAG])
+public_router = APIRouter(prefix="/books", tags=[TAG])
 
 auth_admin = create_authorization(required_roles={AuthRole.ADMIN})
 
@@ -33,23 +36,83 @@ def _author_json(
     return UserName(first=first, middle=middle, last=last).model_dump(mode="json")
 
 
-@router.get("", name="List books (no slash)", response_model=list[BookRead], include_in_schema=False)
-@router.get("/", name="List books", response_model=list[BookRead])
+def _like_pattern(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
+@router.get("", name="List books (no slash)", response_model=Page[BookRead], include_in_schema=False)
+@router.get("/", name="List books", response_model=Page[BookRead])
 async def list_books(
     trending: bool | None = Query(default=None, description="When true, only trending catalogue books"),
-    limit: int | None = Query(default=None, ge=1, le=50),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=8, ge=1, le=50),
+    q: str | None = Query(default=None, description="Match title or author"),
+    genre: list[str] = Query(default=[]),
+    language: list[Language] = Query(default=[]),
+    active_only: bool = Query(default=True),
     session: AsyncSession = Depends(get_session),
-) -> list[BookRead]:
+) -> Page[BookRead]:
     """List catalogue books. Allowed for admin and regular users."""
-    query = select(Book).where(Book.is_active == True)  # noqa: E712
+    filters = []
+    if active_only:
+        filters.append(Book.is_active == True)  # noqa: E712
     if trending is True:
-        query = query.where(Book.is_trending == True)  # noqa: E712
-    query = query.order_by(Book.created_at.desc())
-    if limit is not None:
-        query = query.limit(limit)
-    result = await session.execute(query)
+        filters.append(Book.is_trending == True)  # noqa: E712
+    if genre:
+        filters.append(Book.genre.in_(genre))
+    if language:
+        filters.append(Book.language.in_(language))
+    query_text = (q or "").strip()
+    if query_text:
+        pattern = _like_pattern(query_text)
+        filters.append(
+            or_(
+                Book.title.ilike(pattern, escape="\\"),
+                Book.author["first"].as_string().ilike(pattern, escape="\\"),
+                Book.author["last"].as_string().ilike(pattern, escape="\\"),
+            )
+        )
+    total = int(await session.scalar(select(func.count()).select_from(Book).where(*filters)) or 0)
+    result = await session.execute(
+        select(Book)
+        .where(*filters)
+        .order_by(Book.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
     books = result.scalars().all()
-    return [BookRead.model_validate(b) for b in books]
+    return Page(
+        items=[BookRead.model_validate(b) for b in books],
+        page=page,
+        page_size=page_size,
+        total=total,
+    )
+
+
+@public_router.get("/{book_id}/cover", name="Get book cover")
+async def get_book_cover(
+    book_id: UUID,
+    size: str = Query(default="thumb", pattern="^(thumb|full)$"),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    """Stream a catalogue cover. ``thumb`` is 256px, ``full`` is 1024px."""
+    result = await session.execute(select(Book).where(Book.id == book_id))
+    book = result.scalar_one_or_none()
+    if not book or not book.cover_url:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book cover not found")
+    cover = book.cover_url.strip()
+    if cover.startswith(("http://", "https://")):
+        return RedirectResponse(cover)
+    try:
+        data = await asyncio.to_thread(download_book_cover, book_id, size)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+    media_type = "image/png" if data[:8] == b"\x89PNG\r\n\x1a\n" else "image/jpeg"
+    return Response(content=data, media_type=media_type)
 
 
 @router.get("/{book_id}", name="Get book", response_model=BookRead)

@@ -14,6 +14,8 @@ import {
 import { useTabContentInset } from '@/contexts/audiobook-player';
 import * as React from 'react';
 import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
   View,
@@ -23,10 +25,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const scrollBottomPadding = useTabContentInset();
-  const { audiobooks, isLoading, error, refetch } = useLibraryAudiobooks();
-
   const [statusFilter, setStatusFilter] = React.useState<LibraryStatusFilter>('all');
   const [showFailed, setShowFailed] = React.useState(false);
+  const serverStatus = showFailed
+    ? 'failed'
+    : statusFilter === 'all'
+      ? undefined
+      : statusFilter;
+  const {
+    audiobooks,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    error,
+    loadMore,
+    refetch,
+  } = useLibraryAudiobooks(serverStatus);
 
   const failedCount = React.useMemo(
     () => audiobooks.filter((item) => item.status === 'failed').length,
@@ -37,6 +51,12 @@ export default function LibraryScreen() {
     () => filterLibraryAudiobooks(audiobooks, statusFilter, showFailed),
     [audiobooks, showFailed, statusFilter],
   );
+
+  React.useEffect(() => {
+    if (!isLoading && !isLoadingMore && visibleItems.length === 0 && hasMore) {
+      loadMore();
+    }
+  }, [hasMore, isLoading, isLoadingMore, loadMore, visibleItems.length]);
 
   return (
     <View className="flex-1 bg-background">
@@ -49,7 +69,11 @@ export default function LibraryScreen() {
         }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={() => void refetch()} />
-        }>
+        }
+        onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          if (isNearListEnd(event)) loadMore();
+        }}
+        scrollEventThrottle={16}>
         <View className="px-5 pb-4">
           <Text className="mb-4 text-2xl font-bold tracking-tight">Your Library</Text>
           <LibraryFilterChips
@@ -96,9 +120,15 @@ export default function LibraryScreen() {
             {visibleItems.map((item) => (
               <LibraryAudiobookRow key={item.id} item={item} />
             ))}
+            {isLoadingMore ? <LoadingState className="py-4" /> : null}
           </View>
         )}
       </ScrollView>
     </View>
   );
+}
+
+function isNearListEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
+  const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+  return layoutMeasurement.height + contentOffset.y >= contentSize.height - 280;
 }

@@ -46,8 +46,10 @@ export default function BookDetailScreen() {
               <BookCover
                 coverUrl={book.cover_url}
                 seed={book.id}
-                className="h-36 w-28 shrink-0"
+                size="full"
+                className="shrink-0"
                 roundedClassName="rounded-2xl"
+                style={{ width: 128, height: 176 }}
               />
               <View className="min-w-0 flex-1 justify-center gap-1">
                 <Text className="text-xl font-bold text-foreground">{book.title}</Text>

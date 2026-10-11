@@ -1,6 +1,7 @@
 import { Loader2, Play } from "lucide-react";
 
 import { AudiobookStatusBadge } from "@/components/audiobooks/AudiobookStatusBadge";
+import { resolveCoverUrl } from "@/lib/covers";
 import { formatDateTime, formatDuration } from "@/lib/format";
 import { formatUserName } from "@/lib/user";
 import { cn } from "@/lib/utils";
@@ -71,9 +72,9 @@ export function AudiobookTable({
                 <tr key={row.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      {row.book_cover_url ? (
+                      {resolveCoverUrl(row.book_cover_url, row.book_id) ? (
                         <img
-                          src={row.book_cover_url}
+                          src={resolveCoverUrl(row.book_cover_url, row.book_id) ?? undefined}
                           alt=""
                           className="h-10 w-8 rounded object-cover ring-1 ring-border"
                         />

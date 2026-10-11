@@ -5,33 +5,55 @@ import type { AudiobookRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
 import * as React from 'react';
 
-export function useLibraryAudiobooks() {
+const PAGE_SIZE = 8;
+
+export function useLibraryAudiobooks(status?: string) {
   const { getToken } = useAuth();
   const getTokenRef = React.useRef(getToken);
   getTokenRef.current = getToken;
 
   const [audiobooks, setAudiobooks] = React.useState<AudiobookRow[]>([]);
+  const [page, setPage] = React.useState(1);
+  const [total, setTotal] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const requestId = React.useRef(0);
 
-  const load = React.useCallback(async (silent = false) => {
-    if (!silent) setIsLoading(true);
-    setError(null);
-    try {
-      const token = await getTokenRef.current();
-      if (!token) throw new Error('Not signed in');
-      const data = await fetchMyAudiobooks(token);
-      setAudiobooks(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load library');
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  }, []);
+  const loadPage = React.useCallback(
+    async (nextPage: number, append: boolean) => {
+      const id = ++requestId.current;
+      if (append) setIsLoadingMore(true);
+      else setIsLoading(true);
+      setError(null);
+      try {
+        const token = await getTokenRef.current();
+        if (!token) throw new Error('Not signed in');
+        const data = await fetchMyAudiobooks(token, {
+          page: nextPage,
+          pageSize: PAGE_SIZE,
+          status,
+        });
+        if (id !== requestId.current) return;
+        setAudiobooks((prev) => (append ? [...prev, ...data.items] : data.items));
+        setPage(data.page);
+        setTotal(data.total);
+      } catch (err) {
+        if (id !== requestId.current) return;
+        setError(err instanceof Error ? err.message : 'Failed to load library');
+      } finally {
+        if (id === requestId.current) {
+          setIsLoading(false);
+          setIsLoadingMore(false);
+        }
+      }
+    },
+    [status],
+  );
 
   React.useEffect(() => {
-    void load();
-  }, [load]);
+    void loadPage(1, false);
+  }, [loadPage]);
 
   useUserEventSubscription((message) => {
     if (message.type === 'audiobook.created' || message.type === 'audiobook.updated') {
@@ -46,7 +68,27 @@ export function useLibraryAudiobooks() {
     }
   });
 
-  return { audiobooks, isLoading, error, refetch: () => load() };
+  const hasMore = audiobooks.length < total;
+
+  const loadMore = React.useCallback(() => {
+    if (!hasMore || isLoading || isLoadingMore) return;
+    void loadPage(page + 1, true);
+  }, [hasMore, isLoading, isLoadingMore, loadPage, page]);
+
+  const refetch = React.useCallback(() => {
+    void loadPage(1, false);
+  }, [loadPage]);
+
+  return {
+    audiobooks,
+    total,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    error,
+    loadMore,
+    refetch,
+  };
 }
 
 function audiobookFromSSE(data: AudiobookSSEPayload): AudiobookRow {

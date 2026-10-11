@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import Response
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.enums.auth import AuthRole
@@ -22,6 +22,7 @@ from src.lib.feature.user.current import resolve_current_user
 from src.lib.error import AUDIOBOOK_GENERATION_FAILED, VOICE_USER_NOT_FOUND
 from src.lib.schemas.cloner import GenerateAudiobookRequest
 from src.lib.schemas.common import UserName
+from src.lib.schemas.page import Page
 from src.lib.module.jobs.redis import enqueue_audiobook_generate
 from src.models.content.audiobook import (
     Audiobook,
@@ -99,14 +100,33 @@ def _audiobook_with_book_row(
     )
 
 
-@router.get("", name="List audiobooks (no slash)", response_model=list[AudiobookWithBookRead], include_in_schema=False)
-@router.get("/", name="List audiobooks", response_model=list[AudiobookWithBookRead])
+def _like_pattern(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
+@router.get("", name="List audiobooks (no slash)", response_model=Page[AudiobookWithBookRead], include_in_schema=False)
+@router.get("/", name="List audiobooks", response_model=Page[AudiobookWithBookRead])
 async def list_audiobooks(
     request: Request,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=8, ge=1, le=50),
+    pipeline_status: AudiobookStatus | None = Query(default=None, alias="status"),
     session: AsyncSession = Depends(get_session),
-) -> list[AudiobookWithBookRead]:
+) -> Page[AudiobookWithBookRead]:
     """List the signed-in user's audiobooks with book details."""
     user = await resolve_current_user(request, session)
+    filters = [Audiobook.user_id == user.id]
+    if pipeline_status is not None:
+        filters.append(Audiobook.status == pipeline_status)
+    total = int(
+        await session.scalar(
+            select(func.count(func.distinct(Audiobook.id)))
+            .select_from(Audiobook)
+            .where(*filters)
+        )
+        or 0
+    )
     result = await session.execute(
         select(Audiobook, Book.title, Book.cover_url, Book.author, Book.language, Playback.progress)
         .outerjoin(Book, Audiobook.book_id == Book.id)
@@ -114,8 +134,10 @@ async def list_audiobooks(
             Playback,
             (Playback.audiobook_id == Audiobook.id) & (Playback.user_id == user.id),
         )
-        .where(Audiobook.user_id == user.id)
+        .where(*filters)
         .order_by(Audiobook.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
     )
     out: list[AudiobookWithBookRead] = []
     for row in result.all():
@@ -135,33 +157,60 @@ async def list_audiobooks(
                 playback_progress=playback_progress,
             )
         )
-    return out
+    return Page(items=out, page=page, page_size=page_size, total=total)
 
 
 @router.get(
     "/admin",
     name="Admin list audiobooks",
-    response_model=list[AdminAudiobookListRow],
+    response_model=Page[AdminAudiobookListRow],
     dependencies=[Depends(_admin_auth)],
 )
 async def admin_list_audiobooks(
     user_id: UUID | None = Query(default=None, description="Filter by account"),
-    status: AudiobookStatus | None = Query(default=None, description="Filter by pipeline status"),
+    statuses: list[AudiobookStatus] = Query(default=[], alias="status"),
+    q: str | None = Query(default=None, description="Match book, account, or status"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=8, ge=1, le=50),
     session: AsyncSession = Depends(get_session),
-) -> list[AdminAudiobookListRow]:
+) -> Page[AdminAudiobookListRow]:
     """List audiobooks across all accounts. Admin only."""
-    stmt = (
+    filters = []
+    if user_id is not None:
+        filters.append(Audiobook.user_id == user_id)
+    if statuses:
+        filters.append(Audiobook.status.in_(statuses))
+    query_text = (q or "").strip()
+    if query_text:
+        pattern = _like_pattern(query_text)
+        filters.append(
+            or_(
+                Book.title.ilike(pattern, escape="\\"),
+                User.email.ilike(pattern, escape="\\"),
+                User.name["first"].as_string().ilike(pattern, escape="\\"),
+                User.name["last"].as_string().ilike(pattern, escape="\\"),
+                cast(Audiobook.status, String).ilike(pattern, escape="\\"),
+            )
+        )
+    total = int(
+        await session.scalar(
+            select(func.count(func.distinct(Audiobook.id)))
+            .select_from(Audiobook)
+            .outerjoin(Book, Audiobook.book_id == Book.id)
+            .join(User, Audiobook.user_id == User.id)
+            .where(*filters)
+        )
+        or 0
+    )
+    result = await session.execute(
         select(Audiobook, Book.title, Book.cover_url, Book.author, Book.language, User.email, User.name)
         .outerjoin(Book, Audiobook.book_id == Book.id)
         .join(User, Audiobook.user_id == User.id)
+        .where(*filters)
         .order_by(Audiobook.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
     )
-    if user_id is not None:
-        stmt = stmt.where(Audiobook.user_id == user_id)
-    if status is not None:
-        stmt = stmt.where(Audiobook.status == status)
-
-    result = await session.execute(stmt)
     out: list[AdminAudiobookListRow] = []
     for row in result.all():
         ab = row[0]
@@ -180,7 +229,7 @@ async def admin_list_audiobooks(
                 created_at=ab.created_at,
             )
         )
-    return out
+    return Page(items=out, page=page, page_size=page_size, total=total)
 
 
 @router.get(

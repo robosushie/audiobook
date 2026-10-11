@@ -1,12 +1,12 @@
 import { ScreenHeader } from '@/components/layout/screen-header';
+import { CataloguePager } from '@/components/search/book-grid';
 import { SearchInput } from '@/components/search/search-input';
 import { SearchResults } from '@/components/search/search-results';
 import { LoadingState } from '@/components/ui/app-loader';
 import { Text } from '@/components/ui/text';
-import { useCatalogueBooks } from '@/hooks/useCatalogueBooks';
+import { CATALOGUE_PAGE_SIZE, useCatalogueBooks } from '@/hooks/useCatalogueBooks';
 import { formatBookGenre } from '@/lib/constants/genres';
 import { openBook } from '@/lib/navigation/book';
-import { matchesBookQuery } from '@/lib/search/matches-query';
 import type { BookRow } from '@/types/api';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
@@ -18,22 +18,29 @@ export default function GenreBrowseScreen() {
   const insets = useSafeAreaInsets();
   const { genre: genreParam } = useLocalSearchParams<{ genre: string }>();
   const genreSlug = typeof genreParam === 'string' ? genreParam : genreParam?.[0];
-
-  const { books, isLoading, error, refetch } = useCatalogueBooks();
   const [query, setQuery] = React.useState('');
+  const [debouncedQuery, setDebouncedQuery] = React.useState('');
+  const [page, setPage] = React.useState(1);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setPage(1);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [genreSlug]);
+
+  const { books, total, isLoading, error, refetch } = useCatalogueBooks({
+    genre: genreSlug,
+    q: debouncedQuery || undefined,
+    page,
+  });
 
   const genreLabel = genreSlug ? formatBookGenre(genreSlug) : 'Genre';
-
-  const genreBooks = React.useMemo(() => {
-    if (!genreSlug) return [];
-    return books.filter((book) => book.genre === genreSlug);
-  }, [books, genreSlug]);
-
-  const filteredBooks = React.useMemo(() => {
-    const trimmed = query.trim().toLowerCase();
-    if (!trimmed) return genreBooks;
-    return genreBooks.filter((book) => matchesBookQuery(book, trimmed));
-  }, [genreBooks, query]);
 
   const handleBookPress = React.useCallback(
     (book: BookRow) => {
@@ -53,7 +60,13 @@ export default function GenreBrowseScreen() {
           paddingBottom: insets.bottom + 24,
         }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={() => void refetch()} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={() => {
+              if (page !== 1) setPage(1);
+              else void refetch();
+            }}
+          />
         }>
         <View className="px-5 pb-4">
           <ScreenHeader title={genreLabel} onBack={() => router.back()} />
@@ -70,9 +83,15 @@ export default function GenreBrowseScreen() {
 
         <View className="px-5">
           <SearchResults
-            books={filteredBooks}
-            title={`${genreLabel} · ${filteredBooks.length}`}
+            books={books}
+            title={`${genreLabel} · ${total}`}
             onBookPress={handleBookPress}
+          />
+          <CataloguePager
+            page={page}
+            pageSize={CATALOGUE_PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
           />
         </View>
       </ScrollView>

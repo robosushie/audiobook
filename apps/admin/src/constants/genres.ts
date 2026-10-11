@@ -7,10 +7,8 @@ export const BOOK_GENRES: { value: BookGenre; label: string }[] = [
   { value: "fantasy", label: "Fantasy" },
   { value: "science_fiction", label: "Science fiction" },
   { value: "mystery", label: "Mystery" },
-  { value: "horror", label: "Horror" },
   { value: "biography", label: "Biography" },
   { value: "history", label: "History" },
-  { value: "religion", label: "Religion" },
   { value: "other", label: "Other" },
 ];
 

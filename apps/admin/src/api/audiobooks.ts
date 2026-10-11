@@ -4,6 +4,7 @@ import type {
   AudiobookGenerateBody,
   AudiobookRow,
   AudiobookStatus,
+  ListPage,
 } from "@/types/api";
 
 export function generateAudiobook(
@@ -18,13 +19,23 @@ export function generateAudiobook(
 
 export function fetchAdminAudiobooks(
   request: <T>(path: string, init?: RequestInit) => Promise<T>,
-  params?: { userId?: string; status?: AudiobookStatus },
+  params?: {
+    userId?: string;
+    statuses?: AudiobookStatus[];
+    q?: string;
+    page?: number;
+    pageSize?: number;
+  },
 ) {
   const search = new URLSearchParams();
+  search.set("page", String(params?.page ?? 1));
+  search.set("page_size", String(params?.pageSize ?? 8));
   if (params?.userId) search.set("user_id", params.userId);
-  if (params?.status) search.set("status", params.status);
-  const query = search.toString();
-  return request<AdminAudiobookRow[]>(`/api/audiobooks/admin${query ? `?${query}` : ""}`);
+  for (const status of params?.statuses ?? []) search.append("status", status);
+  if (params?.q) search.set("q", params.q);
+  return request<ListPage<AdminAudiobookRow>>(
+    `/api/audiobooks/admin?${search.toString()}`,
+  );
 }
 
 export async function fetchAdminAudiobookAudioBlob(

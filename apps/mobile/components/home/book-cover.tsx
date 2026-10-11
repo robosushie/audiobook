@@ -1,3 +1,4 @@
+import { resolveCoverUrl, type CoverSize } from '@/lib/covers';
 import { BRAND } from '@/lib/constants/brand';
 import { cn } from '@/lib/utils';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,6 +15,7 @@ const PLACEHOLDER_GRADIENTS = [
 type BookCoverProps = {
   coverUrl?: string | null;
   seed?: string;
+  size?: CoverSize;
   className?: string;
   style?: StyleProp<ImageStyle>;
   roundedClassName?: string;
@@ -22,16 +24,18 @@ type BookCoverProps = {
 export function BookCover({
   coverUrl,
   seed = '0',
+  size = 'thumb',
   className,
   style,
   roundedClassName = 'rounded-2xl',
 }: BookCoverProps) {
   const gradient = PLACEHOLDER_GRADIENTS[hashSeed(seed) % PLACEHOLDER_GRADIENTS.length];
+  const uri = resolveCoverUrl(coverUrl, seed, size);
 
-  if (coverUrl) {
+  if (uri) {
     return (
       <Image
-        source={{ uri: coverUrl }}
+        source={{ uri }}
         className={cn(roundedClassName, className)}
         style={style}
         resizeMode="cover"

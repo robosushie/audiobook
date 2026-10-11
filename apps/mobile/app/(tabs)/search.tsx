@@ -1,14 +1,13 @@
-import { BrowseAllSection } from '@/components/search/browse-all-section';
-import { LoadingState } from '@/components/ui/app-loader';
+import { BookGrid, CataloguePager } from '@/components/search/book-grid';
+import { CatalogueFilters } from '@/components/search/catalogue-filters';
 import { SearchInput } from '@/components/search/search-input';
-import { SearchResults } from '@/components/search/search-results';
+import { LoadingState } from '@/components/ui/app-loader';
 import { Text } from '@/components/ui/text';
-import { useCatalogueBooks } from '@/hooks/useCatalogueBooks';
-import { openBook } from '@/lib/navigation/book';
-import { matchesBookQuery } from '@/lib/search/matches-query';
-import { useRouter } from 'expo-router';
-import type { BookRow } from '@/types/api';
 import { useTabContentInset } from '@/contexts/audiobook-player';
+import { CATALOGUE_PAGE_SIZE, useCatalogueBooks } from '@/hooks/useCatalogueBooks';
+import { openBook } from '@/lib/navigation/book';
+import type { BookRow } from '@/types/api';
+import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,38 +16,30 @@ export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollBottomPadding = useTabContentInset();
-  const { books, isLoading, error, refetch } = useCatalogueBooks();
-
   const [query, setQuery] = React.useState('');
+  const [debouncedQuery, setDebouncedQuery] = React.useState('');
+  const [genre, setGenre] = React.useState<string | null>(null);
+  const [language, setLanguage] = React.useState<string | null>(null);
+  const [page, setPage] = React.useState(1);
 
-  const coverByGenre = React.useMemo(() => {
-    const map = new Map<string, string | null>();
-    for (const book of books) {
-      if (!book.genre || map.has(book.genre)) continue;
-      map.set(book.genre, book.cover_url ?? null);
-    }
-    return map;
-  }, [books]);
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+      setPage(1);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-  const trimmedQuery = query.trim();
-  const hasSearchQuery = trimmedQuery.length > 0;
-
-  const searchResults = React.useMemo(() => {
-    if (!hasSearchQuery) return [];
-    const q = trimmedQuery.toLowerCase();
-    return books.filter((book) => matchesBookQuery(book, q));
-  }, [books, hasSearchQuery, trimmedQuery]);
+  const { books, total, isLoading, error, refetch } = useCatalogueBooks({
+    q: debouncedQuery || undefined,
+    genre: genre ?? undefined,
+    language: language ?? undefined,
+    page,
+  });
 
   const handleBookPress = React.useCallback(
     (book: BookRow) => {
       openBook(router, book);
-    },
-    [router],
-  );
-
-  const handleCategoryPress = React.useCallback(
-    (genre: string) => {
-      router.push(`/genre/${genre}`);
     },
     [router],
   );
@@ -64,11 +55,29 @@ export default function SearchScreen() {
           paddingBottom: scrollBottomPadding,
         }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={() => void refetch()} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={() => {
+              if (page !== 1) setPage(1);
+              else void refetch();
+            }}
+          />
         }>
-        <View className="px-5 pb-4">
-          <Text className="mb-4 text-2xl font-bold tracking-tight">Search</Text>
+        <View className="gap-3 px-5 pb-4">
+          <Text className="text-2xl font-bold tracking-tight">Search</Text>
           <SearchInput value={query} onChangeText={setQuery} />
+          <CatalogueFilters
+            genre={genre}
+            language={language}
+            onGenreChange={(next) => {
+              setGenre(next);
+              setPage(1);
+            }}
+            onLanguageChange={(next) => {
+              setLanguage(next);
+              setPage(1);
+            }}
+          />
         </View>
 
         {error ? (
@@ -79,20 +88,15 @@ export default function SearchScreen() {
 
         {isLoading && books.length === 0 ? <LoadingState className="py-12" /> : null}
 
-        {hasSearchQuery ? (
-          <View className="mb-6 px-5">
-            <SearchResults
-              books={searchResults}
-              title="Results"
-              onBookPress={handleBookPress}
-            />
-          </View>
-        ) : (
-          <BrowseAllSection
-            coverByGenre={coverByGenre}
-            onCategoryPress={handleCategoryPress}
+        <View className="px-5">
+          <BookGrid books={books} onBookPress={handleBookPress} />
+          <CataloguePager
+            page={page}
+            pageSize={CATALOGUE_PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
           />
-        )}
+        </View>
       </ScrollView>
     </View>
   );

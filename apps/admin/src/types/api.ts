@@ -38,10 +38,8 @@ export type BookGenre =
   | "fantasy"
   | "science_fiction"
   | "mystery"
-  | "horror"
   | "biography"
   | "history"
-  | "religion"
   | "other";
 
 export type BookUpdateBody = {
@@ -53,6 +51,13 @@ export type BookUpdateBody = {
   language?: ReferenceLanguage;
   is_active?: boolean;
   is_trending?: boolean;
+};
+
+export type ListPage<T> = {
+  items: T[];
+  page: number;
+  page_size: number;
+  total: number;
 };
 
 export type BookRow = {

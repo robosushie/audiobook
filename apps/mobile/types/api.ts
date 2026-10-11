@@ -4,6 +4,13 @@ export type UserName = {
   last: string;
 };
 
+export type ListPage<T> = {
+  items: T[];
+  page: number;
+  page_size: number;
+  total: number;
+};
+
 export type BookRow = {
   id: string;
   title: string;

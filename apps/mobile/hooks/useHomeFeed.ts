@@ -65,18 +65,19 @@ export function useHomeFeed(): HomeFeedState {
           throw new Error('Not signed in');
         }
 
-        const [playbacks, audiobooks, books] = await Promise.all([
+        const [playbacks, audiobooks, catalogue, trending] = await Promise.all([
           fetchMyPlaybacks(token, 1),
-          fetchMyAudiobooks(token),
-          fetchBooks(token),
+          fetchMyAudiobooks(token, { page: 1, pageSize: 8, status: 'completed' }),
+          fetchBooks(token, { page: 1, pageSize: 8 }),
+          fetchBooks(token, { page: 1, pageSize: 8, trending: true }),
         ]);
 
         if (cancelled) return;
 
-        const trending = books.filter((b) => b.is_trending).slice(0, 8);
-        const nonTrending = books.filter((b) => !b.is_trending);
+        const books = catalogue.items;
+        const nonTrending = books.filter((book) => !book.is_trending);
         const recommended = nonTrending.slice(0, 5);
-        const recommendedIds = new Set(recommended.map((b) => b.id));
+        const recommendedIds = new Set(recommended.map((book) => book.id));
         if (recommended.length < 5) {
           for (const book of books) {
             if (recommended.length >= 5) break;
@@ -88,11 +89,9 @@ export function useHomeFeed(): HomeFeedState {
         }
 
         setContinueItem(playbacks[0] ?? null);
-        setMyAudiobooks(
-          audiobooks.filter((ab) => ab.status === 'completed').slice(0, 4),
-        );
+        setMyAudiobooks(audiobooks.items.slice(0, 4));
         setRecommendedBooks(recommended.slice(0, 5));
-        setTrendingBooks(trending);
+        setTrendingBooks(trending.items);
         hasLoadedRef.current = true;
       } catch (err) {
         if (!cancelled) {
