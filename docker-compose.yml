@@ -1,0 +1,162 @@
+# Backend stack.
+# Published: API :8000, MinIO console on localhost :9001.
+# Postgres, Redis, and the MinIO S3 API are bound to 127.0.0.1 so host
+# `service:api` can use them; they are not reachable off the machine.
+# Preprocess and cloner have no published ports.
+# `docker compose up -d` starts only data services. `deploy:stack` adds --profile stack.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: audiobook-postgres
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE_NAME:-audiobook}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - audiobook-postgres:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: audiobook-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - audiobook-redis:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: audiobook-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - audiobook-minio:/data
+    networks:
+      - internal
+
+  minio-init:
+    image: cgr.dev/chainguard/minio-client:latest-dev
+    container_name: audiobook-minio-init
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    networks:
+      - internal
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do
+          echo "waiting for minio"
+          sleep 2
+        done
+        echo "minio is ready"
+        mc mb --ignore-existing local/voice
+        mc mb --ignore-existing local/audiobook
+        mc mb --ignore-existing local/book
+    restart: "no"
+
+  api:
+    profiles: ["stack"]
+    image: audiobook-api
+    build:
+      context: .
+      dockerfile: src/services/api/Dockerfile
+    container_name: audiobook-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: audiobook
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minio
+      S3_SECRET_KEY: minioadmin
+      S3_REGION: us-east-1
+      PREPROCESS_BASE_URL: http://preprocess:8003
+      CLONER_BASE_URL: http://cloner:8002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    networks:
+      - internal
+
+  preprocess:
+    profiles: ["stack"]
+    image: audiobook-preprocess
+    build:
+      context: .
+      dockerfile: src/services/preprocess/Dockerfile
+    container_name: audiobook-preprocess
+    env_file:
+      - .env
+    environment:
+      PREPROCESS_DEVICE: cpu
+      CUDA_VISIBLE_DEVICES: ""
+      PREPROCESS_MODEL_DIR: /data/preprocess-models
+      HF_HOME: /data/preprocess-models/huggingface
+      HF_HUB_CACHE: /data/preprocess-models/huggingface/hub
+      TORCH_HOME: /data/preprocess-models/torch
+      XDG_CACHE_HOME: /data/preprocess-models
+    volumes:
+      - audiobook-preprocess-models:/data/preprocess-models
+    networks:
+      - internal
+
+  cloner:
+    profiles: ["stack"]
+    image: audiobook-cloner
+    build:
+      context: .
+      dockerfile: src/services/cloner/Dockerfile
+    container_name: audiobook-cloner
+    env_file:
+      - .env
+    environment:
+      CLONER_MODEL_DIR: /data/cloner-models
+    volumes:
+      - audiobook-cloner-models:/data/cloner-models
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  audiobook-postgres:
+  audiobook-redis:
+  audiobook-minio:
+  audiobook-cloner-models:
+  audiobook-preprocess-models:

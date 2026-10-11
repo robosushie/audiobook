@@ -1,5 +1,8 @@
 """FastAPI server."""
 
+from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
+
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -8,14 +11,22 @@ from src.lib.fastapi.templates.scalar import DOCS_TEMPLATE
 from src.lib.schemas.fastapi import Middleware, Server
 
 
-def create_server(server: Server, middleware: Middleware) -> tuple[FastAPI, APIRouter]:
-    """Create a FastAPI server (health + optional Scalar docs only; mount other routes in ``app.py``)."""
+def create_server(
+    server: Server,
+    middleware: Middleware,
+    lifespan: Callable[[FastAPI], AbstractAsyncContextManager[None]] | None = None,
+) -> tuple[FastAPI, APIRouter]:
+    """Create a FastAPI server.
+
+    Health and optional Scalar docs only. Mount other routes in ``app.py``.
+    """
     app = FastAPI(
         title=server.title,
         description=server.description,
         version=server.version,
         docs_url=None,  # Disable default /docs
         redoc_url=None,
+        lifespan=lifespan,
     )
 
     app.add_middleware(CORSMiddleware, **middleware.model_dump())

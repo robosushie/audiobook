@@ -1,4 +1,4 @@
-"""Download and resolve on-disk paths for IndicF5 and XTTS v2 weights (no GPU warmup)."""
+"""Download and resolve on-disk paths for voice cloning weights (no GPU warmup)."""
 
 from __future__ import annotations
 
@@ -9,8 +9,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import find_dotenv, load_dotenv
-
 from src.constants.cloner import (
+    CHATTERBOX_FILES,
+    CHATTERBOX_REPO,
+    HABIBI_CKPT_FILENAME,
+    HABIBI_REPO,
+    HABIBI_VOCAB_FILENAME,
     INDICF5_CKPT_FILENAME,
     INDICF5_REPO,
     INDICF5_VOCAB_FILENAME,
@@ -21,10 +25,7 @@ load_dotenv(find_dotenv(usecwd=True))
 
 logger = logging.getLogger(__name__)
 
-_INDICF5_VOCOS_FILES = ("config.yaml", "pytorch_model.bin")
-_XTTS_MODEL_FOLDER = "tts_models--multilingual--multi-dataset--xtts_v2"
-_XTTS_REPO = "coqui/XTTS-v2"
-_XTTS_FILES = ("model.pth", "config.json", "vocab.json", "hash.md5", "speakers_xtts.pth")
+_VOCOS_FILES = ("config.yaml", "pytorch_model.bin")
 
 _paths: ClonerAssetPaths | None = None
 
@@ -36,8 +37,15 @@ class ClonerAssetPaths:
     root: Path
     indicf5_ckpt: Path
     indicf5_vocab: Path
-    indicf5_vocos_dir: Path
-    xtts_home: Path
+    habibi_ckpt: Path
+    habibi_vocab: Path
+    chatterbox_dir: Path
+    vocos_dir: Path
+
+    @property
+    def indicf5_vocos_dir(self) -> Path:
+        """Backward-compatible alias for shared Vocos weights."""
+        return self.vocos_dir
 
 
 def cloner_model_root() -> Path:
@@ -65,13 +73,27 @@ def _materialize(source: Path, target: Path) -> Path:
     return target
 
 
-def _download_indicf5_assets(root: Path) -> tuple[Path, Path, Path]:
+def _download_vocos(vocos_dir: Path) -> None:
+    from huggingface_hub import hf_hub_download
+
+    vocos_dir.mkdir(parents=True, exist_ok=True)
+    for filename in _VOCOS_FILES:
+        dest = vocos_dir / filename
+        if dest.exists():
+            continue
+        logger.info("Downloading Vocos %s to %s", filename, dest)
+        hf_hub_download(
+            repo_id=INDICF5_VOCODER_REPO,
+            filename=filename,
+            local_dir=str(vocos_dir),
+        )
+
+
+def _download_indicf5_assets(root: Path) -> tuple[Path, Path]:
     from huggingface_hub import hf_hub_download
 
     indicf5_dir = root / "indicf5"
-    vocos_dir = indicf5_dir / "vocos"
     indicf5_dir.mkdir(parents=True, exist_ok=True)
-    vocos_dir.mkdir(parents=True, exist_ok=True)
 
     ckpt_target = indicf5_dir / INDICF5_CKPT_FILENAME
     vocab_target = indicf5_dir / "vocab.txt"
@@ -103,53 +125,69 @@ def _download_indicf5_assets(root: Path) -> tuple[Path, Path, Path]:
     else:
         logger.info("IndicF5 vocab already present at %s", vocab_target)
 
-    for filename in _INDICF5_VOCOS_FILES:
-        dest = vocos_dir / filename
-        if dest.exists():
-            continue
-        logger.info("Downloading Vocos %s to %s", filename, dest)
-        hf_hub_download(
-            repo_id=INDICF5_VOCODER_REPO,
-            filename=filename,
-            local_dir=str(vocos_dir),
-        )
-
-    return ckpt_target, vocab_target, vocos_dir
+    return ckpt_target, vocab_target
 
 
-def _download_xtts_assets(xtts_home: Path) -> None:
-    model_dir = xtts_home / "tts" / _XTTS_MODEL_FOLDER
-    if model_dir.is_dir() and (model_dir / "config.json").is_file() and (model_dir / "model.pth").is_file():
-        logger.info("XTTS v2 model already present at %s", model_dir)
-        return
-
-    os.environ["TTS_HOME"] = str(xtts_home)
-    model_dir.mkdir(parents=True, exist_ok=True)
-
-    tos_file = model_dir / "tos_agreed.txt"
-    if os.environ.get("COQUI_TOS_AGREED") != "1" and not tos_file.exists():
-        tos_file.write_text(
-            "I have read, understood and agreed to the Terms and Conditions.",
-            encoding="utf-8",
-        )
-
+def _download_habibi_assets(root: Path) -> tuple[Path, Path]:
     from huggingface_hub import hf_hub_download
 
-    logger.info("Downloading XTTS v2 model to %s", model_dir)
-    for filename in _XTTS_FILES:
-        dest = model_dir / filename
+    habibi_dir = root / "habibi"
+    habibi_dir.mkdir(parents=True, exist_ok=True)
+
+    ckpt_target = habibi_dir / "model_200000.safetensors"
+    vocab_target = habibi_dir / "vocab.txt"
+
+    if not ckpt_target.exists():
+        logger.info("Downloading Habibi Unified checkpoint to %s", ckpt_target)
+        ckpt_source = Path(
+            hf_hub_download(
+                repo_id=HABIBI_REPO,
+                filename=HABIBI_CKPT_FILENAME,
+            ),
+        )
+        _materialize(ckpt_source, ckpt_target)
+    else:
+        logger.info("Habibi checkpoint already present at %s", ckpt_target)
+
+    if not vocab_target.exists():
+        logger.info("Downloading Habibi vocab to %s", vocab_target)
+        vocab_source = Path(
+            hf_hub_download(
+                repo_id=HABIBI_REPO,
+                filename=HABIBI_VOCAB_FILENAME,
+            ),
+        )
+        _materialize(vocab_source, vocab_target)
+    else:
+        logger.info("Habibi vocab already present at %s", vocab_target)
+
+    return ckpt_target, vocab_target
+
+
+def _download_chatterbox_assets(root: Path) -> Path:
+    from huggingface_hub import hf_hub_download
+
+    chatterbox_dir = root / "chatterbox"
+    chatterbox_dir.mkdir(parents=True, exist_ok=True)
+
+    for filename in CHATTERBOX_FILES:
+        dest = chatterbox_dir / filename
         if dest.exists():
             continue
-        logger.info("Downloading XTTS %s", filename)
-        hf_hub_download(
-            repo_id=_XTTS_REPO,
-            filename=filename,
-            local_dir=str(model_dir),
+        logger.info("Downloading Chatterbox %s to %s", filename, dest)
+        source = Path(
+            hf_hub_download(
+                repo_id=CHATTERBOX_REPO,
+                filename=filename,
+            ),
         )
+        _materialize(source, dest)
+
+    return chatterbox_dir
 
 
 def ensure_cloner_assets_downloaded() -> ClonerAssetPaths:
-    """Download missing IndicF5 / XTTS weights to disk. Does not load models into memory."""
+    """Download missing cloner weights to disk. Does not load models into memory."""
     global _paths
     if _paths is not None:
         return _paths
@@ -158,18 +196,21 @@ def ensure_cloner_assets_downloaded() -> ClonerAssetPaths:
     root.mkdir(parents=True, exist_ok=True)
     logger.info("Cloner model root: %s", root)
 
-    indicf5_ckpt, indicf5_vocab, indicf5_vocos_dir = _download_indicf5_assets(root)
-    xtts_home = root / "xtts"
-    xtts_home.mkdir(parents=True, exist_ok=True)
-    os.environ["TTS_HOME"] = str(xtts_home)
-    _download_xtts_assets(xtts_home)
+    vocos_dir = root / "vocos"
+    _download_vocos(vocos_dir)
+
+    indicf5_ckpt, indicf5_vocab = _download_indicf5_assets(root)
+    habibi_ckpt, habibi_vocab = _download_habibi_assets(root)
+    chatterbox_dir = _download_chatterbox_assets(root)
 
     _paths = ClonerAssetPaths(
         root=root,
         indicf5_ckpt=indicf5_ckpt,
         indicf5_vocab=indicf5_vocab,
-        indicf5_vocos_dir=indicf5_vocos_dir,
-        xtts_home=xtts_home,
+        habibi_ckpt=habibi_ckpt,
+        habibi_vocab=habibi_vocab,
+        chatterbox_dir=chatterbox_dir,
+        vocos_dir=vocos_dir,
     )
     return _paths
 

@@ -9,8 +9,10 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { REFERENCE_LANGUAGES } from "@/constants/languages";
 import { ROUTES } from "@/constants/routes";
+import { useUserEventSubscription } from "@/contexts/user-events";
 import { useApi } from "@/hooks/useApi";
-import type { BookRow, ReferenceLanguage, VoiceProfileRow } from "@/types/api";
+import type { AudiobookSSEPayload, VoiceSSEPayload } from "@/lib/sse/types";
+import type { AudiobookRow, BookRow, ReferenceLanguage, VoiceProfileRow } from "@/types/api";
 
 export function SimulateAudiobookPage() {
   const { request } = useApi();
@@ -23,7 +25,57 @@ export function SimulateAudiobookPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [queued, setQueued] = useState<AudiobookRow | null>(null);
+
+  const mergeVoice = useCallback((incoming: VoiceSSEPayload) => {
+    if (incoming.language !== language) return;
+    setVoices((prev) => {
+      const index = prev.findIndex((item) => item.id === incoming.id);
+      if (index === -1) {
+        return [
+          {
+            id: incoming.id,
+            user_id: incoming.user_id,
+            reference_id: incoming.reference_id,
+            label: incoming.label,
+            raw_text: "",
+            duration: incoming.duration,
+            status: incoming.status,
+            language: incoming.language,
+            audio_url: incoming.audio_url,
+          },
+          ...prev,
+        ];
+      }
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        status: incoming.status,
+        duration: incoming.duration,
+        audio_url: incoming.audio_url ?? next[index].audio_url,
+        label: incoming.label,
+      };
+      return next;
+    });
+  }, [language]);
+
+  useUserEventSubscription((message) => {
+    if (message.type === "voice.created" || message.type === "voice.updated") {
+      mergeVoice(message.data as VoiceSSEPayload);
+      return;
+    }
+    if (message.type !== "audiobook.created" && message.type !== "audiobook.updated") return;
+    const data = message.data as AudiobookSSEPayload;
+    setQueued((current) => {
+      if (!current || current.id !== data.id) return current;
+      return {
+        ...current,
+        status: data.status,
+        content_url: data.content_url ?? current.content_url,
+        duration: data.duration ?? current.duration,
+      };
+    });
+  });
 
   const loadCatalog = useCallback(async () => {
     setLoading(true);
@@ -65,11 +117,10 @@ export function SimulateAudiobookPage() {
   }, [booksForLanguage]);
 
   useEffect(() => {
-    if (readyVoices.length > 0) {
-      setVoiceProfileId(readyVoices[0].id);
-    } else {
-      setVoiceProfileId("");
-    }
+    setVoiceProfileId((current) => {
+      if (current && readyVoices.some((voice) => voice.id === current)) return current;
+      return readyVoices[0]?.id ?? "";
+    });
   }, [readyVoices]);
 
   async function handleSubmit(event: React.FormEvent) {
@@ -78,15 +129,12 @@ export function SimulateAudiobookPage() {
 
     setSubmitting(true);
     setError(null);
-    setSuccess(null);
     try {
       const audiobook = await generateAudiobook(request, {
         book_id: bookId,
         voice_profile_id: voiceProfileId,
       });
-      setSuccess(
-        `Audiobook generation queued (id: ${audiobook.id}). Inngest will process it — check the database for status.`,
-      );
+      setQueued(audiobook);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to queue generation");
     } finally {
@@ -182,9 +230,20 @@ export function SimulateAudiobookPage() {
         )}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        {success ? (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            {success}
+        {queued ? (
+          <p
+            className={
+              queued.status === "failed"
+                ? "rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                : "rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            }
+          >
+            Audiobook {queued.status}
+            {queued.status === "completed" && queued.duration
+              ? ` (${Math.round(queued.duration)}s). Play it from Audiobooks.`
+              : queued.status === "failed"
+                ? ". Generation failed."
+                : ". Status updates here as the job runs."}
           </p>
         ) : null}
 

@@ -1,21 +1,28 @@
-"""Voice profile audio, alignment, and STT configuration."""
+"""Voice profile audio, alignment, and preprocess configuration."""
 
-# Sample rate and clip duration
+# Stored reference clip
 TARGET_SAMPLE_RATE = 24_000
-MIN_CLIP_SECONDS = 10.0
-MAX_CLIP_SECONDS = 12.0
-DEFAULT_CLIP_SECONDS = 11.0
-WINDOW_HOP_SECONDS = 0.25
-
-# Preprocessing
 PEAK_TARGET = 0.95
+HIGHPASS_HZ = 80.0
 
-# Clip scoring — PLR2004 comparison thresholds
-RMS_SILENCE_THRESHOLD = 1e-5
-CLIPPING_AMPLITUDE_THRESHOLD = 0.99
+# Decode / model sample rates
+DENOISE_SAMPLE_RATE = 48_000
+ALIGN_SAMPLE_RATE = 16_000
 
-# Text alignment — PLR2004 comparison threshold
-ALIGNMENT_MIN_MATCH_RATIO = 0.25
+# Clip selection. A reading shorter than MAX is kept whole when it has enough speech.
+MIN_CLIP_SECONDS = 8.0
+MAX_CLIP_SECONDS = 12.0
+TARGET_CLIP_SECONDS = 10.0
+MIN_SPEECH_SECONDS = 6.0
+EDGE_PAD_SECONDS = 0.10
+VAD_EDGE_PAD_SECONDS = 0.05
+MAX_INTERNAL_PAUSE_SECONDS = 0.35
+KEPT_PAUSE_SECONDS = 0.12
+GAP_PENALTY_START_SECONDS = 0.40
 
-# Groq STT
-WHISPER_MODEL = "whisper-large-v3"
+# Mean of per-word exp(log-prob). Below this, the take does not match the passage.
+MIN_ALIGNMENT_SCORE = 0.05
+
+ALIGNMENT_MODEL = "MahmoudAshraf/mms-300m-1130-forced-aligner"
+FFMPEG_TIMEOUT_SECONDS = 120
+PREPARE_HTTP_TIMEOUT_SECONDS = 600.0

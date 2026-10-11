@@ -7,4 +7,5 @@ class ClonerType(StrEnum):
     """TTS / voice-cloning engine used to synthesize audiobook audio."""
 
     INDICF5 = "indicf5"
-    XTTSV2 = "xttsv2"
+    CHATTERBOX = "chatterbox"
+    HABIBITTS = "habitibtts"

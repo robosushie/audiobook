@@ -38,6 +38,7 @@ export function VoiceProfileListRow({ voice }: VoiceProfileListRowProps) {
         <Text className="truncate text-sm font-semibold text-foreground">{voice.label}</Text>
         <Text className="truncate text-xs text-muted-foreground">
           {formatReferenceLanguage(voice.language)}
+          {voice.status === 'ready' && voice.duration > 0 ? ` · ${Math.round(voice.duration)}s` : ''}
         </Text>
         <Text
           className={cnStatus(

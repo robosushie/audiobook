@@ -3,6 +3,9 @@
 # =========================
 temp/
 
+# Local voice / audiobook / book blobs
+data/storage/
+
 # =========================
 # Environment & secrets
 # =========================

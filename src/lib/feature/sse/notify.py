@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from src.enums.language import Language
 from src.lib.feature.sse.publish import publish_user_event
-from src.lib.module.inngest.db import job_session
+from src.lib.module.jobs.db import job_session
 from src.lib.schemas.sse import AudiobookSSEPayload, UserEventType, VoiceSSEPayload
 from src.models.content.audiobook import Audiobook
 from src.models.content.book import Book

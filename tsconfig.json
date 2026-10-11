@@ -5,7 +5,6 @@
     "forceConsistentCasingInFileNames": true
   },
   "references": [
-    { "path": "apps/mobile" },
-    { "path": "apps/web" }
+    { "path": "apps/mobile" }
   ]
 }

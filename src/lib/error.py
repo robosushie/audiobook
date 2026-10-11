@@ -14,7 +14,14 @@ REFERENCE_IN_USE = "Reference is linked to voice profiles and cannot be deleted"
 REFERENCE_DUPLICATE = "A reference with this text and language already exists"
 REFERENCE_ID_OR_TEXT_REQUIRED = "Provide reference_id or reference_text with language"
 VOICE_AUDIO_NOT_READY = "Voice profile audio is not ready for cloning"
-GROQ_API_KEY_MISSING = "GROQ_API_KEY is not set in the environment"
+PREPARE_EMPTY_TEXT = "reference_text is empty"
+PREPARE_DECODE_FAILED = "Could not decode the recording"
+PREPARE_TOO_LITTLE_SPEECH = "Recording does not contain at least 6 seconds of speech"
+PREPARE_ALIGNMENT_FAILED = "Could not align the recording to the reference passage"
+PREPARE_LOW_CONFIDENCE = "Recording does not match the reference passage closely enough"
+PREPARE_NO_SPAN = (
+    "Could not find an 8-12 second span that matches the reference passage"
+)
 
 # Books & audiobooks
 BOOK_NOT_FOUND = "Book not found"

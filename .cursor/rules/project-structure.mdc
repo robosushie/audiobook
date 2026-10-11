@@ -32,12 +32,12 @@ Feature folders hold helpers and glue that **import** from `models/` and `lib/sc
 ## Routes and services
 
 - **HTTP route handlers** live under **`services/api/routes/`** and are mounted from **`services/api/app.py`**. Shared FastAPI app factory and **health** live under **`lib/fastapi/`** (`server.py`, `routes/health.py`). **move reusable logic** into `lib/feature/<name>/` or `lib/module/<name>/` instead of growing route files.
-- **Background jobs (Inngest)** live under **`services/event/`** — entry point **`services/event/app.py`** (health + `/api/inngest` only). Also: `client.py`, `enqueue.py`, `registry.py`, `functions/`. Event payloads: **`lib/schemas/events.py`**. Job DB sessions: **`lib/module/inngest/db.py`**. REST API does **not** mount Inngest.
+- **Background jobs** run inside the API process. The Redis worker, queue helpers, and handlers live under **`lib/module/jobs/`**. Event payloads: **`lib/schemas/events.py`**. Job DB sessions: **`lib/module/jobs/db.py`**. Preprocess and cloning stay in their own containers; the API calls them over HTTP.
 
 ## `__init__.py`
 
 - **Only** `models/__init__.py` — registers all ORM tables for Alembic (`import src.models`).
-- Do **not** add `__init__.py` to other packages; import explicit modules (e.g. `from src.lib.module.storage.supabase import upload_voice`).
+- Do **not** add `__init__.py` to other packages; import explicit modules (e.g. `from src.lib.module.storage.local import upload_voice`).
 
 ## Quick reference
 
@@ -49,4 +49,4 @@ Feature folders hold helpers and glue that **import** from `models/` and `lib/sc
 | Shared module / infra helpers | `lib/module/<name>/...` |
 | API route modules (except health) | `services/api/routes/...` |
 | Health route + FastAPI factory | `lib/fastapi/...` |
-| Inngest client, enqueue, functions | `services/event/...` |
+| Redis job worker | `lib/module/jobs/...` (started by the API) |

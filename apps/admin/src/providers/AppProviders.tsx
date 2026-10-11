@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/react";
 import { BrowserRouter } from "react-router-dom";
 
+import { UserEventsProvider } from "@/contexts/user-events";
 import { ROUTES } from "@/constants/routes";
 import { getClerkPublishableKey } from "@/lib/env";
 
@@ -16,7 +17,9 @@ export function AppProviders({ children }: AppProvidersProps) {
       signUpUrl={ROUTES.login}
       afterSignOutUrl={ROUTES.login}
     >
-      <BrowserRouter>{children}</BrowserRouter>
+      <BrowserRouter>
+        <UserEventsProvider>{children}</UserEventsProvider>
+      </BrowserRouter>
     </ClerkProvider>
   );
 }

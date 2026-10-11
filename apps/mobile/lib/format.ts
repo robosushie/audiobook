@@ -2,18 +2,11 @@ import type { UserName } from '@/types/api';
 
 const LANGUAGE_LABELS: Record<string, string> = {
   english: 'English',
-  assamese: 'Assamese',
-  bengali: 'Bengali',
-  gujarati: 'Gujarati',
   hindi: 'Hindi',
-  arabic: 'Arabic',
-  kannada: 'Kannada',
   malayalam: 'Malayalam',
-  marathi: 'Marathi',
-  odia: 'Odia',
-  punjabi: 'Punjabi',
   tamil: 'Tamil',
-  telugu: 'Telugu',
+  odia: 'Odia',
+  arabic: 'Arabic',
 };
 
 export function formatAuthorName(author: UserName | null | undefined): string {

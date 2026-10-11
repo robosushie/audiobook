@@ -1,7 +1,6 @@
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { AudiobookPlayerProvider } from '@/contexts/audiobook-player';
-import { UserEventsProvider } from '@/contexts/user-events';
 import { BRAND } from '@/lib/constants/brand';
 import { TAB_BAR_CONTENT_HEIGHT } from '@/lib/constants/layout';
 import { THEME } from '@/lib/theme';
@@ -16,8 +15,7 @@ export default function TabLayout() {
   const tabBarHeight = TAB_BAR_CONTENT_HEIGHT + insets.bottom;
 
   return (
-    <UserEventsProvider>
-      <AudiobookPlayerProvider>
+    <AudiobookPlayerProvider>
         <View style={styles.root} className="flex-1 bg-background">
         <Tabs
         screenOptions={{
@@ -83,8 +81,7 @@ export default function TabLayout() {
         />
         </Tabs>
         </View>
-      </AudiobookPlayerProvider>
-    </UserEventsProvider>
+    </AudiobookPlayerProvider>
   );
 }
 

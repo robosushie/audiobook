@@ -22,7 +22,7 @@ from src.lib.feature.user.current import resolve_current_user
 from src.lib.error import AUDIOBOOK_GENERATION_FAILED, VOICE_USER_NOT_FOUND
 from src.lib.schemas.cloner import GenerateAudiobookRequest
 from src.lib.schemas.common import UserName
-from src.services.event.enqueue import enqueue_audiobook_generate
+from src.lib.module.jobs.redis import enqueue_audiobook_generate
 from src.models.content.audiobook import (
     Audiobook,
     AudiobookCreate,
@@ -264,7 +264,7 @@ async def generate_audiobook_endpoint(
     body: GenerateAudiobookBody,
     session: AsyncSession = Depends(get_session),
 ) -> AudiobookRead:
-    """Enqueue audiobook generation via Inngest (clone + upload)."""
+    """Enqueue audiobook generation via Redis (clone + upload)."""
     clerk_id = request.state.credentials.id
     user_result = await session.execute(select(User).where(User.auth_id == clerk_id))
     user = user_result.scalar_one_or_none()
@@ -281,9 +281,11 @@ async def generate_audiobook_endpoint(
             ),
             session,
         )
+        # Commit before enqueue so the Redis worker can load the row immediately.
+        await session.commit()
         await enqueue_audiobook_generate(
-            audiobook_id=audiobook.id,
-            cloner_type=body.cloner_type,
+            audiobook_id=str(audiobook.id),
+            cloner_type=body.cloner_type.value if body.cloner_type else None,
         )
         book_result = await session.execute(select(Book.title, Book.cover_url).where(Book.id == audiobook.book_id))
         book_row = book_result.first()

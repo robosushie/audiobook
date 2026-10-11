@@ -3,8 +3,10 @@ import { fetchVoiceProfiles } from '@/api/voice';
 import { AppLoader } from '@/components/ui/app-loader';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { useUserEventSubscription } from '@/contexts/user-events';
 import { formatReferenceLanguage } from '@/lib/constants/languages';
 import { formatLanguage } from '@/lib/format';
+import type { VoiceSSEPayload } from '@/lib/sse/types';
 import { cn } from '@/lib/utils';
 import type { BookRow, ReferenceLanguage, VoiceProfileRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
@@ -37,6 +39,39 @@ export function CreateAudiobookModal({
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  const pendingVoices = React.useMemo(
+    () => voices.filter((v) => v.status === 'queued' || v.status === 'processing'),
+    [voices],
+  );
+
+  useUserEventSubscription((message) => {
+    if (!visible) return;
+    if (message.type !== 'voice.created' && message.type !== 'voice.updated') return;
+    const data = message.data as VoiceSSEPayload;
+    if (data.language !== bookLanguage) return;
+    setVoices((prev) => {
+      const index = prev.findIndex((item) => item.id === data.id);
+      const row: VoiceProfileRow = {
+        id: data.id,
+        user_id: data.user_id,
+        reference_id: data.reference_id,
+        label: data.label,
+        status: data.status,
+        duration: data.duration,
+        language: data.language,
+        raw_url: data.raw_url,
+        audio_url: data.audio_url,
+      };
+      if (index === -1) return [row, ...prev];
+      const next = [...prev];
+      next[index] = { ...next[index], ...row };
+      return next;
+    });
+    if (data.status === 'ready') {
+      setSelectedVoiceId((current) => current ?? data.id);
+    }
+  });
 
   const readyVoices = React.useMemo(
     () => voices.filter((v) => v.status === 'ready'),
@@ -136,8 +171,9 @@ export function CreateAudiobookModal({
           ) : readyVoices.length === 0 ? (
             <View className="mb-4 rounded-2xl border border-border/60 bg-card px-4 py-4">
               <Text className="text-center text-sm text-muted-foreground">
-                No ready voices for {formatReferenceLanguage(bookLanguage)}. Add and process a
-                voice in Profile → My voices first.
+                {pendingVoices.length > 0
+                  ? 'A voice is still processing. It will show up here when it is ready.'
+                  : `No ready voices for ${formatReferenceLanguage(bookLanguage)}. Add and process a voice in Profile → My voices first.`}
               </Text>
             </View>
           ) : (

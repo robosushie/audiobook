@@ -15,6 +15,10 @@ export function useVoiceRecording() {
   const [error, setError] = React.useState<string | null>(null);
   const previewPlayer = useAudioPlayer(recordingUri);
 
+  const [recordedDurationMillis, setRecordedDurationMillis] = React.useState(0);
+  const durationRef = React.useRef(0);
+  durationRef.current = recorderState.durationMillis;
+
   const ensurePermission = React.useCallback(async () => {
     const { granted } = await requestRecordingPermissionsAsync();
     if (!granted) {
@@ -25,6 +29,7 @@ export function useVoiceRecording() {
   const startRecording = React.useCallback(async () => {
     setError(null);
     setRecordingUri(null);
+    setRecordedDurationMillis(0);
     try {
       await ensurePermission();
       await setAudioModeAsync({
@@ -40,8 +45,10 @@ export function useVoiceRecording() {
   }, [ensurePermission, recorder]);
 
   const stopRecording = React.useCallback(async () => {
+    const elapsed = durationRef.current;
     try {
       await recorder.stop();
+      setRecordedDurationMillis(elapsed);
       if (recorder.uri) {
         setRecordingUri(recorder.uri);
       }
@@ -53,6 +60,7 @@ export function useVoiceRecording() {
   const resetRecording = React.useCallback(async () => {
     previewPlayer.pause();
     setRecordingUri(null);
+    setRecordedDurationMillis(0);
     setError(null);
     try {
       await recorder.prepareToRecordAsync();
@@ -73,6 +81,7 @@ export function useVoiceRecording() {
   return {
     isRecording: recorderState.isRecording,
     durationMillis: recorderState.durationMillis,
+    recordedDurationMillis,
     recordingUri,
     error,
     isPreviewPlaying: previewPlayer.playing,

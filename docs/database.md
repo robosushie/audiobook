@@ -69,7 +69,7 @@ _sync_url = f"postgresql+psycopg2://{_user}:{_password}@{_host}:{_port}/{_name}"
 DATABASE_USER=
 DATABASE_PASSWORD=
 DATABASE_HOST=
-DATABASE_PORT=5432
+DATABASE_PORT=5433
 DATABASE_NAME=
 ```
 

@@ -1,18 +1,20 @@
 """Unified CLI runner for all project scripts.
 
 Usage (via pnpm at repo root):
+    pnpm run dev               # Admin UI + API (API also runs the Redis worker)
     pnpm run db:create
     pnpm run db:make "migration name"
     pnpm run db:upgrade
-    pnpm run app:web          # Vite apps/web :3000
     pnpm run app:admin        # Vite apps/admin :3001
-    pnpm run service:api       # REST API :8000
-    pnpm run service:event     # Event service :8001 (/api/health + /api/inngest)
+    pnpm run service:api       # REST API :8000 (includes the Redis job worker)
+    pnpm run service:cloner    # Stateless cloner HTTP API :8002
+    pnpm run service:preprocess  # Stateless voice preprocess API :8003
+    pnpm run infra:up          # Postgres + Redis + MinIO (localhost only)
+    pnpm run deploy:stack      # build and run the full backend (GPU cloner if present)
     python scripts/bootstrap/run.py
 
 Usage (via python — mobile / env injection):
     python scripts/run.py app:mobile dev
-    python scripts/run.py app:web dev
 
 Usage (directly):
     python scripts/run.py db:create
@@ -43,7 +45,8 @@ VENV_BIN = ROOT / ".venv" / ("Scripts" if sys.platform == "win32" else "bin")
 ALEMBIC = str(VENV_BIN / "alembic")
 PNPM = "pnpm.cmd" if sys.platform == "win32" else "pnpm"
 API_PORT = 8000
-EVENT_PORT = 8001
+CLONER_PORT = 8002
+PREPROCESS_PORT = 8003
 
 
 def load_env() -> dict[str, str]:
@@ -116,7 +119,7 @@ def cmd_db_create(_args: list[str]) -> None:
 
     env = load_env()
     host = env.get("DATABASE_HOST", "localhost")
-    port = env.get("DATABASE_PORT", "5432")
+    port = env.get("DATABASE_PORT", "5433")
     user = env.get("DATABASE_USER", "postgres")
     password = env.get("DATABASE_PASSWORD", "")
     db_name = env.get("DATABASE_NAME")
@@ -163,7 +166,7 @@ def cmd_db_create(_args: list[str]) -> None:
         target_cursor.execute("CREATE SCHEMA public")
         target_cursor.execute(
             pg_sql.SQL("GRANT ALL ON SCHEMA public TO {}").format(
-                pg_sql.Identifier(user)
+                pg_sql.Identifier(user),
             ),
         )
         target_cursor.execute("GRANT ALL ON SCHEMA public TO public")
@@ -172,7 +175,7 @@ def cmd_db_create(_args: list[str]) -> None:
         print(f"All tables in '{db_name}' dropped.")
     else:
         admin_cursor.execute(
-            pg_sql.SQL("CREATE DATABASE {}").format(pg_sql.Identifier(db_name))
+            pg_sql.SQL("CREATE DATABASE {}").format(pg_sql.Identifier(db_name)),
         )
         admin_cursor.close()
         admin_conn.close()
@@ -207,21 +210,12 @@ def _run_pnpm_in_app(app_dir: str, args: list[str]) -> None:
 def cmd_app_mobile(args: list[str]) -> None:
     """Run a pnpm script inside apps/mobile (e.g. dev, build).
 
-    Injects root .env into the process so both web and mobile use the same env.
+    Injects root .env into the process so the app uses the same env.
     """
     require_args(
-        args, 1, "python scripts/run.py app:mobile <script>  e.g. app:mobile dev"
+        args, 1, "python scripts/run.py app:mobile <script>  e.g. app:mobile dev",
     )
     _run_pnpm_in_app("mobile", args)
-
-
-def cmd_app_web(args: list[str]) -> None:
-    """Run a pnpm script inside apps/web (e.g. dev, build).
-
-    Injects root .env into the process so both web and mobile use the same env.
-    """
-    require_args(args, 1, "python scripts/run.py app:web <script>  e.g. app:web dev")
-    _run_pnpm_in_app("web", args)
 
 
 def cmd_app_admin(args: list[str]) -> None:
@@ -244,7 +238,8 @@ def cmd_service_api(args: list[str]) -> None:
     Injects root .env so the API uses the same config as web/mobile.
     """
     env = load_env_optional()
-    env.setdefault("INTERNAL_SSE_SECRET", "dev-sse-secret")
+    env.setdefault("PREPROCESS_BASE_URL", f"http://127.0.0.1:{PREPROCESS_PORT}")
+    env.setdefault("CLONER_BASE_URL", f"http://127.0.0.1:{CLONER_PORT}")
     run(
         [
             str(VENV_BIN / "uvicorn"),
@@ -258,20 +253,72 @@ def cmd_service_api(args: list[str]) -> None:
     )
 
 
-def cmd_service_event(args: list[str]) -> None:
-    """Start the event service (health + Inngest function serve on /api/inngest)."""
+def cmd_infra_up(_args: list[str]) -> None:
+    """Start Postgres, Redis, and MinIO. App containers stay behind the stack profile."""
+    run(["docker", "compose", "up", "-d"])
+
+
+def _gpu_available() -> bool:
+    """Return whether nvidia-smi runs successfully on the host."""
+    try:
+        result = subprocess.run(
+            ["nvidia-smi"],
+            cwd=ROOT,
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
+
+
+def cmd_deploy_stack(_args: list[str]) -> None:
+    """Build and start the full backend. The cloner gets a GPU only when one is present."""
+    compose = ["docker", "compose", "-f", "docker-compose.yml"]
+    if _gpu_available():
+        print("GPU detected; starting the cloner with GPU access")
+        compose.extend(["-f", "docker-compose.gpu.yml"])
+    else:
+        print("No GPU detected; starting the cloner on CPU")
+    run(
+        [*compose, "--profile", "stack", "build"],
+        extra_env={"COMPOSE_PARALLEL_LIMIT": "1"},
+    )
+    run([*compose, "--profile", "stack", "up", "-d"])
+    print("API            http://127.0.0.1:8000")
+    print("MinIO console  http://127.0.0.1:9001")
+
+
+def cmd_service_cloner(args: list[str]) -> None:
+    """Start the stateless cloner HTTP API (no Postgres / Redis)."""
     env = load_env_optional()
-    env.setdefault("SSE_FORWARD_TO_API", "1")
-    env.setdefault("API_BASE_URL", f"http://127.0.0.1:{API_PORT}")
-    env.setdefault("INTERNAL_SSE_SECRET", "dev-sse-secret")
     run(
         [
             str(VENV_BIN / "uvicorn"),
-            "src.services.event.app:app",
+            "src.services.cloner.app:app",
             "--host",
             "0.0.0.0",
             "--port",
-            str(EVENT_PORT),
+            str(CLONER_PORT),
+            *args,
+        ],
+        extra_env=env,
+    )
+
+
+def cmd_service_preprocess(args: list[str]) -> None:
+    """Start the stateless voice-preprocess HTTP API (no Postgres / Redis)."""
+    env = load_env_optional()
+    env.setdefault("PREPROCESS_DEVICE", "cpu")
+    env.setdefault("PREPROCESS_BASE_URL", f"http://127.0.0.1:{PREPROCESS_PORT}")
+    run(
+        [
+            str(VENV_BIN / "uvicorn"),
+            "src.services.preprocess.app:app",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            str(PREPROCESS_PORT),
             *args,
         ],
         extra_env=env,
@@ -287,11 +334,13 @@ COMMANDS: dict[str, object] = {
     "db:make": cmd_db_make,
     "db:upgrade": cmd_db_upgrade,
     "app:mobile": cmd_app_mobile,
-    "app:web": cmd_app_web,
     "app:admin": cmd_app_admin,
     "bootstrap": cmd_bootstrap,
+    "infra:up": cmd_infra_up,
+    "deploy:stack": cmd_deploy_stack,
     "service:api": cmd_service_api,
-    "service:event": cmd_service_event,
+    "service:cloner": cmd_service_cloner,
+    "service:preprocess": cmd_service_preprocess,
 }
 
 

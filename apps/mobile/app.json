@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Audiobook",
+    "slug": "audiobook",
+    "owner": "audiobook-org",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -26,7 +27,9 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#faf8f5"
       },
-      "permissions": ["RECORD_AUDIO"],
+      "permissions": [
+        "RECORD_AUDIO"
+      ],
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
@@ -42,6 +45,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f629a4ad-450c-4422-85c8-0f0cdd876102"
+      }
     }
   }
 }

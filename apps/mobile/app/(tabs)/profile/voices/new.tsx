@@ -36,6 +36,7 @@ export default function NewVoiceScreen() {
   const {
     isRecording,
     durationMillis,
+    recordedDurationMillis,
     recordingUri,
     error: recordingError,
     isPreviewPlaying,
@@ -71,7 +72,8 @@ export default function NewVoiceScreen() {
     return references.find((row) => row.language === language) ?? null;
   }, [references, language]);
 
-  const durationLabel = `${Math.floor(durationMillis / 1000)}s`;
+  const durationLabel = `${Math.floor((isRecording ? durationMillis : recordedDurationMillis) / 1000)}s`;
+  const recordingTooShort = Boolean(recordingUri) && !isRecording && recordedDurationMillis < 8000;
 
   async function handleSubmit() {
     if (!name.trim()) {
@@ -80,6 +82,13 @@ export default function NewVoiceScreen() {
     }
     if (!recordingUri) {
       Alert.alert('Recording required', 'Record your voice sample first.');
+      return;
+    }
+    if (recordedDurationMillis < 8000) {
+      Alert.alert(
+        'Recording too short',
+        'Record at least 8 seconds. Shorter clips do not have enough speech to align.',
+      );
       return;
     }
     if (!selectedReference) {
@@ -195,8 +204,16 @@ export default function NewVoiceScreen() {
             />
           </Pressable>
           <Text className="mt-3 text-sm font-semibold text-foreground">
-            {isRecording ? `Recording… ${durationLabel}` : recordingUri ? 'Recorded' : 'Tap to record'}
+            {isRecording ? `Recording… ${durationLabel}` : recordingUri ? `Recorded · ${durationLabel}` : 'Tap to record'}
           </Text>
+          <Text className="mt-1 text-center text-xs text-muted-foreground">
+            Record at least 8 seconds of the passage.
+          </Text>
+          {recordingTooShort ? (
+            <Text className="mt-2 text-center text-xs text-destructive">
+              This recording is under 8 seconds. Record a longer take before submitting.
+            </Text>
+          ) : null}
           {recordingError ? (
             <Text className="mt-2 text-center text-xs text-destructive">{recordingError}</Text>
           ) : null}
@@ -226,7 +243,7 @@ export default function NewVoiceScreen() {
 
         <Button
           className="rounded-full bg-accent"
-          disabled={submitting || !recordingUri || !selectedReference}
+          disabled={submitting || !recordingUri || !selectedReference || recordingTooShort}
           onPress={() => void handleSubmit()}>
           {submitting ? (
             <AppLoader size={20} color="#ffffff" />

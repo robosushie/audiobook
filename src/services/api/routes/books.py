@@ -12,7 +12,7 @@ from src.enums.language import Language
 from src.lib.auth.clerk import create_authorization
 from src.lib.db import get_session
 from src.lib.feature.book.content import upload_manuscript
-from src.lib.module.storage.supabase import download_book_content
+from src.lib.module.storage.local import download_book_content
 from src.lib.schemas.book import BookContentRead
 from src.lib.schemas.common import UserName
 from src.models.content.book import Book, BookCreate, BookRead, BookUpdate

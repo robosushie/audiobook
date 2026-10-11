@@ -25,7 +25,7 @@ export type BookContentRow = {
 export type AudiobookGenerateBody = {
   book_id: string;
   voice_profile_id: string;
-  cloner_type?: 'indicf5' | 'xttsv2' | null;
+  cloner_type?: 'indicf5' | 'chatterbox' | 'habitibtts' | null;
 };
 
 export type PlaybackRow = {
@@ -45,18 +45,11 @@ export type PlaybackRow = {
 
 export type ReferenceLanguage =
   | 'english'
-  | 'assamese'
-  | 'bengali'
-  | 'gujarati'
   | 'hindi'
-  | 'arabic'
-  | 'kannada'
   | 'malayalam'
-  | 'marathi'
-  | 'odia'
-  | 'punjabi'
   | 'tamil'
-  | 'telugu';
+  | 'odia'
+  | 'arabic';
 
 export type ReferenceRow = {
   id: string;

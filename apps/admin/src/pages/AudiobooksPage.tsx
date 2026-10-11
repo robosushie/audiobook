@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/react";
 import { RefreshCw, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { fetchAdminAudiobookAudioBlob, fetchAdminAudiobooks } from "@/api/audiobooks";
 import { fetchUsers } from "@/api/users";
@@ -10,7 +10,9 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useApi } from "@/hooks/useApi";
+import { useUserEventSubscription } from "@/contexts/user-events";
 import { formatUserName } from "@/lib/user";
+import type { AudiobookSSEPayload } from "@/lib/sse/types";
 import type { AdminAudiobookRow, AudiobookStatusFilter, UserRow } from "@/types/api";
 
 export function AudiobooksPage() {
@@ -28,8 +30,8 @@ export function AudiobooksPage() {
   const [audioLoading, setAudioLoading] = useState(false);
   const [playLoadingId, setPlayLoadingId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const [rows, accountRows] = await Promise.all([
@@ -44,13 +46,52 @@ export function AudiobooksPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load audiobooks");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [request, accountFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const audiobookIdsRef = useRef<Set<string>>(new Set());
+  audiobookIdsRef.current = new Set(audiobooks.map((row) => row.id));
+
+  useUserEventSubscription((message) => {
+    if (message.type !== "audiobook.created" && message.type !== "audiobook.updated") return;
+    const data = message.data as AudiobookSSEPayload;
+    if (!audiobookIdsRef.current.has(data.id)) {
+      void load(true);
+      return;
+    }
+    setAudiobooks((prev) => {
+      const index = prev.findIndex((row) => row.id === data.id);
+      if (index === -1) return prev;
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        status: data.status,
+        content_url: data.content_url ?? next[index].content_url,
+        duration: data.duration ?? next[index].duration,
+        book_title: data.book_title ?? next[index].book_title,
+        book_cover_url: data.book_cover_url ?? next[index].book_cover_url,
+      };
+      return next;
+    });
+  });
+
+  const hasPending = useMemo(
+    () => audiobooks.some((row) => row.status === "queued" || row.status === "processing"),
+    [audiobooks],
+  );
+
+  useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(() => {
+      void load(true);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [hasPending, load]);
 
   useEffect(() => {
     return () => {

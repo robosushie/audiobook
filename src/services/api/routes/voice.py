@@ -1,5 +1,6 @@
 """Voice profiles/samples API routes. Full CRUD for admin and regular users."""
 
+import asyncio
 from uuid import UUID
 
 from fastapi import (
@@ -26,11 +27,12 @@ from src.lib.error import (
     VOICE_USER_NOT_FOUND,
 )
 from src.lib.feature.sse.notify import publish_voice_row
+from src.lib.module.storage.local import delete_voice_objects
 from src.lib.voice.preprocess import create_queued_voice_profile
 from src.models.content.reference import Reference
 from src.models.content.voice import Voice, VoiceCreate, VoiceRead, VoiceUpdate
 from src.models.user.user import User
-from src.services.event.enqueue import enqueue_voice_preprocess
+from src.lib.module.jobs.redis import enqueue_voice_preprocess
 
 TAG = "Voice profiles"
 router = APIRouter(prefix="/voice-profiles", tags=[TAG])
@@ -131,7 +133,7 @@ async def upload_voice_profile(
     ),
     session: AsyncSession = Depends(get_session),
 ) -> VoiceRead:
-    """Upload raw voice audio; preprocessing runs asynchronously via Inngest."""
+    """Upload raw voice audio; preprocessing runs asynchronously via the preprocess service."""
     user = await _current_user(request, session)
     content_type = file.content_type or ""
     if "audio" not in content_type and not (file.filename or "").lower().endswith(
@@ -166,7 +168,8 @@ async def upload_voice_profile(
             language=language,
             session=session,
         )
-        await enqueue_voice_preprocess(profile_id=profile.id, user_id=user.id)
+        await session.commit()
+        await enqueue_voice_preprocess(profile_id=str(profile.id), user_id=str(user.id))
         ref_result = await session.execute(
             select(Reference.language).where(Reference.id == profile.reference_id),
         )
@@ -233,4 +236,7 @@ async def delete_voice_profile(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=VOICE_PROFILE_NOT_FOUND
         )
+    user_id = profile.user_id
     await session.delete(profile)
+    await session.flush()
+    await asyncio.to_thread(delete_voice_objects, user_id, profile_id)

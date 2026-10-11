@@ -7,17 +7,20 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from clerk_backend_api import Clerk
 from clerk_backend_api.models.clerkerrors import ClerkErrors
 from clerk_backend_api.models.getuserlistop import GetUserListRequest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
-
 from src.enums.auth import AuthProvider, AuthRole
+from src.enums.content import BookCategory
 from src.enums.language import Language
 from src.enums.user import Gender
+from src.lib.feature.book.content import upload_manuscript
 from src.lib.schemas.common import UserName
+from src.models.content.book import Book
 from src.models.content.reference import Reference
 from src.models.user.user import User
 
@@ -345,6 +348,100 @@ def sync_reference(session: Session, *, text: str, language: Language) -> str:
     session.add(Reference(text=normalized, language=language))
     session.commit()
     return "created"
+
+
+def load_book_records(filename: str = "books.json") -> list[dict[str, Any]]:
+    """Load catalogue book records from ``data/<filename>``."""
+    path = DATA_DIR / filename
+    if not path.is_file():
+        msg = f"Bootstrap data file not found: {path}"
+        raise FileNotFoundError(msg)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict) and isinstance(data.get("books"), list):
+        return data["books"]
+    msg = f'Expected a JSON array or {{"books": [...]}} in {path}'
+    raise ValueError(msg)
+
+
+def _author_json(record: dict[str, Any]) -> dict[str, str | None]:
+    """Serialize a bootstrap author object for the books JSONB column."""
+    author = record["author"]
+    middle = author.get("middle")
+    return UserName(
+        first=str(author["first"]).strip(),
+        middle=str(middle).strip() if middle else None,
+        last=str(author["last"]).strip(),
+    ).model_dump(mode="json")
+
+
+def sync_book(session: Session, record: dict[str, Any]) -> str:
+    """Create or refresh one catalogue book and upload its manuscript."""
+    title = str(record["title"]).strip()
+    language = Language(str(record["language"]).strip().lower())
+    manuscript = str(record["content"]).strip()
+    if not title or not manuscript:
+        msg = "Book title and content are required"
+        raise ValueError(msg)
+
+    existing = session.execute(
+        select(Book).where(Book.title == title, Book.language == language),
+    ).scalar_one_or_none()
+    book_id = existing.id if existing is not None else uuid4()
+    content_url = upload_manuscript(book_id, manuscript)
+    raw_categories = record.get("categories") or []
+    categories = [BookCategory(str(item).strip().lower()) for item in raw_categories]
+    genre = record.get("genre")
+    description = record.get("description")
+    age_min = record.get("age_min")
+    age_max = record.get("age_max")
+
+    if existing is not None:
+        existing.author = _author_json(record)
+        existing.description = str(description).strip() if description else None
+        existing.genre = str(genre).strip() if genre else None
+        existing.age_min = int(age_min) if age_min is not None else None
+        existing.age_max = int(age_max) if age_max is not None else None
+        existing.content_url = content_url
+        existing.is_active = bool(record.get("is_active", True))
+        existing.is_trending = bool(record.get("is_trending", False))
+        existing.categories = categories
+        session.add(existing)
+        session.commit()
+        return "refreshed"
+
+    book = Book(
+        id=book_id,
+        title=title,
+        author=_author_json(record),
+        description=str(description).strip() if description else None,
+        genre=str(genre).strip() if genre else None,
+        language=language,
+        age_min=int(age_min) if age_min is not None else None,
+        age_max=int(age_max) if age_max is not None else None,
+        content_url=content_url,
+        is_active=bool(record.get("is_active", True)),
+        is_trending=bool(record.get("is_trending", False)),
+        categories=categories,
+    )
+    session.add(book)
+    session.commit()
+    return "created"
+
+
+def bootstrap_books(filename: str = "books.json") -> None:
+    """Seed catalogue books and upload their manuscripts (no Clerk)."""
+    records = load_book_records(filename)
+    session_factory = get_sync_session_factory()
+    with session_factory() as session:
+        for index, record in enumerate(records, start=1):
+            language = str(record.get("language", "")).strip().lower()
+            title = str(record.get("title", "")).strip()
+            action = sync_book(session, record)
+            encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+            shown = title.encode(encoding, errors="replace").decode(encoding)
+            print(f"  [{index}] {language} {shown}: {action}")
 
 
 def bootstrap_references(filename: str = "reference.json") -> None:

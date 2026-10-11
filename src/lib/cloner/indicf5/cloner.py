@@ -1,5 +1,6 @@
 """IndicF5 voice cloning (ai4bharat/IndicF5 weights via f5_tts inference stack)."""
 
+import gc
 import logging
 import tempfile
 from pathlib import Path
@@ -130,7 +131,7 @@ def _load_models() -> tuple[object, object]:
     _VOCODER = load_vocoder(
         vocoder_name=INDICF5_VOCODER_NAME,
         is_local=True,
-        local_path=str(assets.indicf5_vocos_dir),
+        local_path=str(assets.vocos_dir),
         device=device,
     )
     return _MODEL, _VOCODER
@@ -177,3 +178,17 @@ class IndicF5Cloner(VoiceCloner):
 
         duration = float(len(wav) / sr)
         return CloneResult(audio_bytes=audio_bytes, duration=duration)
+
+    def unload(self) -> None:
+        unload_models()
+
+
+def unload_models() -> None:
+    """Drop cached IndicF5 weights from memory."""
+    global _MODEL, _VOCODER
+    _MODEL = None
+    _VOCODER = None
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+

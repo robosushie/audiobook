@@ -9,13 +9,13 @@ const CARDS = [
   {
     to: ROUTES.simulateVoice,
     title: "Simulate voice",
-    description: "Record a sample against a reference passage and queue voice preprocess (Inngest).",
+    description: "Record a sample against a reference passage and queue voice preprocess.",
     icon: Mic,
   },
   {
     to: ROUTES.simulateAudiobook,
     title: "Simulate audiobook",
-    description: "Pick a book and voice profile, then queue audiobook generation (Inngest).",
+    description: "Pick a book and voice profile, then queue audiobook generation.",
     icon: BookAudio,
   },
 ] as const;

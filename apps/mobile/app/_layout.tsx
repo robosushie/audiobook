@@ -1,6 +1,7 @@
 import '@/global.css';
 
 import { NAV_THEME } from '@/lib/theme';
+import { UserEventsProvider } from '@/contexts/user-events';
 import { ClerkProvider, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { ThemeProvider } from '@react-navigation/native';
@@ -65,21 +66,23 @@ function Routes() {
   }
 
   return (
-    <Stack>
-      {/* Screens only shown when the user is NOT signed in */}
-      <Stack.Protected guard={!isSignedIn}>
-        <Stack.Screen name="(auth)/sign-in" options={SIGN_IN_SCREEN_OPTIONS} />
-      </Stack.Protected>
+    <UserEventsProvider>
+      <Stack>
+        {/* Screens only shown when the user is NOT signed in */}
+        <Stack.Protected guard={!isSignedIn}>
+          <Stack.Screen name="(auth)/sign-in" options={SIGN_IN_SCREEN_OPTIONS} />
+        </Stack.Protected>
 
-      {/* Screens only shown when the user IS signed in */}
-      <Stack.Protected guard={isSignedIn}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="book/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="genre/[genre]" options={{ headerShown: false }} />
-      </Stack.Protected>
+        {/* Screens only shown when the user IS signed in */}
+        <Stack.Protected guard={isSignedIn}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="book/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="genre/[genre]" options={{ headerShown: false }} />
+        </Stack.Protected>
 
-      {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
-    </Stack>
+        {/* Screens outside the guards are accessible to everyone (e.g. not found) */}
+      </Stack>
+    </UserEventsProvider>
   );
 }
 

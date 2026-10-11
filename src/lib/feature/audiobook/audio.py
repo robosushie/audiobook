@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.enums.media import AudiobookStatus
-from src.lib.module.storage.supabase import AUDIOBOOK_BUCKET, audiobook_object_path, download_bytes
+from src.lib.module.storage.local import AUDIOBOOK_BUCKET, audiobook_object_path, download_bytes
 from src.models.content.audiobook import Audiobook
 
 

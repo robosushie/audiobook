@@ -8,45 +8,37 @@ from src.enums.language import Language
 
 @dataclass(frozen=True, slots=True)
 class LanguageSettings:
-    """Configuration shared across STT, cloning, and TTS pipelines."""
+    """Configuration shared across alignment, cloning, and TTS pipelines."""
 
     iso: str
+    iso639_3: str
     cloner: ClonerType
 
 
 _INDICF5_LANGUAGES: frozenset[Language] = frozenset(
     {
-        Language.ASSAMESE,
-        Language.BENGALI,
-        Language.GUJARATI,
         Language.HINDI,
-        Language.KANNADA,
         Language.MALAYALAM,
-        Language.MARATHI,
-        Language.ODIYA,
-        Language.PUNJABI,
         Language.TAMIL,
-        Language.TELUGU,
-    }
+        Language.ODIYA,
+    },
 )
 
 LANGUAGE_SETTINGS: dict[Language, LanguageSettings] = {
-    Language.ENGLISH: LanguageSettings(iso="en", cloner=ClonerType.XTTSV2),
-    Language.ASSAMESE: LanguageSettings(iso="as", cloner=ClonerType.INDICF5),
-    Language.BENGALI: LanguageSettings(iso="bn", cloner=ClonerType.INDICF5),
-    Language.GUJARATI: LanguageSettings(iso="gu", cloner=ClonerType.INDICF5),
-    Language.HINDI: LanguageSettings(iso="hi", cloner=ClonerType.INDICF5),
-    Language.ARABIC: LanguageSettings(iso="ar", cloner=ClonerType.XTTSV2),
-    Language.KANNADA: LanguageSettings(iso="kn", cloner=ClonerType.INDICF5),
-    Language.MALAYALAM: LanguageSettings(iso="ml", cloner=ClonerType.INDICF5),
-    Language.MARATHI: LanguageSettings(iso="mr", cloner=ClonerType.INDICF5),
-    Language.ODIYA: LanguageSettings(iso="or", cloner=ClonerType.INDICF5),
-    Language.PUNJABI: LanguageSettings(iso="pa", cloner=ClonerType.INDICF5),
-    Language.TAMIL: LanguageSettings(iso="ta", cloner=ClonerType.INDICF5),
-    Language.TELUGU: LanguageSettings(iso="te", cloner=ClonerType.INDICF5),
+    Language.ENGLISH: LanguageSettings(iso="en", iso639_3="eng", cloner=ClonerType.CHATTERBOX),
+    Language.HINDI: LanguageSettings(iso="hi", iso639_3="hin", cloner=ClonerType.INDICF5),
+    Language.MALAYALAM: LanguageSettings(iso="ml", iso639_3="mal", cloner=ClonerType.INDICF5),
+    Language.TAMIL: LanguageSettings(iso="ta", iso639_3="tam", cloner=ClonerType.INDICF5),
+    Language.ODIYA: LanguageSettings(iso="or", iso639_3="ori", cloner=ClonerType.INDICF5),
+    Language.ARABIC: LanguageSettings(iso="ar", iso639_3="ara", cloner=ClonerType.HABIBITTS),
 }
 
-_DEFAULT = LanguageSettings(iso="en", cloner=ClonerType.XTTSV2)
+_DEFAULT = LanguageSettings(iso="en", iso639_3="eng", cloner=ClonerType.CHATTERBOX)
+
+
+def language_slug(language: Language | str) -> str:
+    """Return the catalogue slug for an enum or a string loaded from the database."""
+    return Language(language).value
 
 
 def get_language_settings(language: Language) -> LanguageSettings:
@@ -55,8 +47,13 @@ def get_language_settings(language: Language) -> LanguageSettings:
 
 
 def language_to_iso(language: Language) -> str:
-    """ISO-639-1 code for Whisper, XTTS, and other locale-aware APIs."""
+    """ISO-639-1 code for locale-aware APIs."""
     return get_language_settings(language).iso
+
+
+def language_to_iso639_3(language: Language) -> str:
+    """ISO-639-3 code for the MMS forced aligner."""
+    return get_language_settings(language).iso639_3
 
 
 def cloner_for_language(language: Language) -> ClonerType:

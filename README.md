@@ -1,13 +1,13 @@
 # Audiobook
 
-A monorepo containing the mobile app, web app, and API service for the Audiobook platform.
+A monorepo containing the mobile app, admin app, and API service for the Audiobook platform.
 
 ## Repository structure
 
 ```text
 apps/
-├── mobile/          # Expo (React Native) mobile app
-└── web/             # Next.js web app
+├── admin/           # Vite admin console
+└── mobile/          # Expo (React Native) mobile app
 src/                 # Python FastAPI backend + workers
 docs/                # Architecture and design docs (primarily for AI context)
 scripts/             # Developer CLI runner
@@ -27,7 +27,9 @@ Make sure these are installed on your machine before starting.
 | pnpm | 9+ | Monorepo package manager |
 | Python | 3.12.x | API and migration tooling |
 | Poetry | 2.x | Python dependency manager |
-| PostgreSQL | 15+ | Database (local or Docker) |
+| PostgreSQL | 15+ | Database (local or Docker Compose) |
+| Redis | 7+ | Job queue (local or Docker Compose) |
+| Docker | 24+ | Optional; used by `pnpm run infra:up` |
 
 ---
 
@@ -59,7 +61,7 @@ EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 DATABASE_USER=postgres
 DATABASE_PASSWORD=postgres
 DATABASE_HOST=localhost
-DATABASE_PORT=5432
+DATABASE_PORT=5433
 DATABASE_NAME=audiobook
 ```
 
@@ -75,29 +77,26 @@ pnpm install
 
 ```bash
 poetry install
+poetry run pip install chatterbox-tts --no-deps
 ```
 
-This creates a `.venv` folder at the root and installs all Python dependencies listed in `pyproject.toml` (FastAPI, SQLModel, Alembic, psycopg2, etc.).
+This creates a `.venv` folder at the root and installs all Python dependencies listed in `pyproject.toml` (FastAPI, SQLModel, Alembic, psycopg2, etc.). Chatterbox is installed with `--no-deps` because its `pkuseg` build is unreliable on Windows; runtime deps are already in Poetry.
 
 > All `pnpm run` scripts that invoke Python automatically use `.venv`. You never need to activate the venv manually.
 
-### 5. Start PostgreSQL
+### 5. Start PostgreSQL and Redis
 
-#### Option A — Docker (recommended, no local install needed)
+#### Option A — Docker Compose (recommended)
 
 ```bash
-docker run -d \
-  --name audiobook-db \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=audiobook \
-  -p 5432:5432 \
-  postgres:16
+pnpm run infra:up
 ```
 
-#### Option B — Local PostgreSQL
+This starts local Postgres 16, Redis 7, and MinIO (`localhost:5433`, `localhost:6379`, and `127.0.0.1:9000`).
 
-Make sure PostgreSQL is running, then create the database manually:
+#### Option B — Local PostgreSQL + Redis
+
+Make sure both are running, then create the database manually:
 
 ```bash
 psql -U postgres -c "CREATE DATABASE audiobook;"
@@ -126,12 +125,6 @@ This applies all pending migrations and creates the tables in the database.
 | Command | What it does |
 | --- | --- |
 | `pnpm run service:api` | Start the FastAPI backend on `http://localhost:8000` |
-
-### Web
-
-| Command | What it does |
-| --- | --- |
-| `pnpm run app:web dev` | Start the Next.js web app on `http://localhost:3000` |
 
 ### Mobile
 
@@ -209,9 +202,10 @@ git clone <repo-url> && cd Audiobook
 cp .env.example .env        # fill in your values
 pnpm install                 # JS deps
 poetry install               # Python deps + .venv
+pnpm run infra:up            # Postgres + Redis + MinIO
 pnpm run db:create           # create the database
 pnpm run db:upgrade          # apply all migrations
-pnpm run service:api         # start the API
+pnpm run service:api         # API and Redis job worker
 ```
 
 ---
@@ -222,9 +216,9 @@ All scripts live in `scripts/run.py` and are exposed through `package.json`. You
 
 | Script | Arguments | Description |
 | --- | --- | --- |
+| `infra:up` | — | Start local Postgres, Redis, and MinIO (`docker compose up -d`) |
 | `db:create` | — | Create the app database (reads `.env`) |
 | `db:make` | `"migration name"` | Autogenerate an Alembic migration |
 | `db:upgrade` | — | Apply all pending migrations |
 | `app:mobile` | `<pnpm script>` | Run a script inside `apps/mobile` |
-| `app:web` | `<pnpm script>` | Run a script inside `apps/web` |
-| `service:api` | — | Start the FastAPI server |
+| `service:api` | — | Start the FastAPI server and its Redis job worker |

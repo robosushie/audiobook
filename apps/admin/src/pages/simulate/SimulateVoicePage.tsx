@@ -10,10 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { REFERENCE_LANGUAGES } from "@/constants/languages";
 import { ROUTES } from "@/constants/routes";
+import { useUserEventSubscription } from "@/contexts/user-events";
 import { useApi } from "@/hooks/useApi";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { recordingToWavBlob } from "@/lib/audio";
-import type { ReferenceLanguage, ReferenceRow } from "@/types/api";
+import type { VoiceSSEPayload } from "@/lib/sse/types";
+import type { ReferenceLanguage, ReferenceRow, VoiceProfileRow } from "@/types/api";
 
 export function SimulateVoicePage() {
   const { request } = useApi();
@@ -27,7 +29,22 @@ export function SimulateVoicePage() {
   const [loadingRefs, setLoadingRefs] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [tracked, setTracked] = useState<VoiceProfileRow | null>(null);
+
+  useUserEventSubscription((message) => {
+    if (message.type !== "voice.created" && message.type !== "voice.updated") return;
+    const data = message.data as VoiceSSEPayload;
+    setTracked((current) => {
+      if (!current || current.id !== data.id) return current;
+      return {
+        ...current,
+        status: data.status,
+        duration: data.duration,
+        audio_url: data.audio_url ?? current.audio_url,
+        label: data.label,
+      };
+    });
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +92,6 @@ export function SimulateVoicePage() {
 
     setSubmitting(true);
     setError(null);
-    setSuccess(null);
     try {
       const token = await getToken();
       if (!token) throw new Error("Not authenticated");
@@ -87,9 +103,7 @@ export function SimulateVoicePage() {
       formData.append("reference_id", selectedReference.id);
 
       const profile = await uploadVoiceProfile(token, formData);
-      setSuccess(
-        `Voice profile queued (id: ${profile.id}). Preprocess runs via Inngest — check the database for status.`,
-      );
+      setTracked(profile);
       recorder.reset();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -189,9 +203,18 @@ export function SimulateVoicePage() {
         </div>
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        {success ? (
-          <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            {success}
+        {tracked ? (
+          <p
+            className={
+              tracked.status === "failed"
+                ? "rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                : "rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+            }
+          >
+            {tracked.label}: {tracked.status}
+            {tracked.status === "ready" && tracked.duration
+              ? ` (${Math.round(tracked.duration)}s)`
+              : ""}
           </p>
         ) : null}
 

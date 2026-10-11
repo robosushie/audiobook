@@ -1,0 +1,38 @@
+[
+  {
+    "title": "The Garden Bench",
+    "language": "english",
+    "author": {"first": "Asha", "middle": null, "last": "Mehta"},
+    "description": "A quiet morning in a garden, told for young readers.",
+    "genre": "Fiction",
+    "categories": ["fairytale"],
+    "age_min": 6,
+    "age_max": 12,
+    "is_trending": true,
+    "content": "A warm breeze moved through the garden. A child laughed nearby as birds called from the tall trees. It was a peaceful morning.\n\nAn old man sat on a wooden bench, watching the sunlight dance on the leaves. He remembered summers from his childhood, when the days felt endless and every sound seemed full of promise. A dog trotted past, tail wagging, and the man smiled.\n\nThe child ran over with a handful of fallen blossoms and set them on the bench. Together they listened. Sometimes the smallest moments are the ones we carry longest."
+  },
+  {
+    "title": "बाग की सुबह",
+    "language": "hindi",
+    "author": {"first": "मीरा", "middle": null, "last": "जोशी"},
+    "description": "बच्चों के लिए एक शांत सुबह की छोटी कहानी।",
+    "genre": "Fiction",
+    "categories": ["fairytale"],
+    "age_min": 6,
+    "age_max": 12,
+    "is_trending": true,
+    "content": "बगीचे में हल्की हवा चल रही थी। पास में एक बच्चा हँस रहा था और ऊँचे पेड़ों से पक्षियों की आवाज़ आ रही थी। वह एक शांत सुबह थी।\n\nएक बूढ़ा आदमी लकड़ी की बेंच पर बैठा था, पत्तों पर खेलती धूप को देख रहा था। उसे बचपन की गर्मियाँ याद आईं, जब दिन अनंत लगते थे और हर आवाज़ में उम्मीद भरी होती थी। एक कुत्ता पूँछ हिलाता हुआ गुज़रा, और आदमी मुस्कुरा उठा।\n\nबच्चा कुछ गिरे हुए फूल लेकर बेंच के पास आ गया। दोनों चुपचाप सुनते रहे। कभी-कभी सबसे छोटे पल वही होते हैं जो हम सबसे लंबे समय तक संभालकर रखते हैं।"
+  },
+  {
+    "title": "صباح الحديقة",
+    "language": "arabic",
+    "author": {"first": "ليلى", "middle": null, "last": "حسن"},
+    "description": "قصة قصيرة لصباح هادئ في الحديقة.",
+    "genre": "Fiction",
+    "categories": ["adventure"],
+    "age_min": 6,
+    "age_max": 12,
+    "is_trending": false,
+    "content": "نسيم دافئ يمر عبر الحديقة. ضحك طفل قريب بينما غردت الطيور من الأشجار العالية. كان صباحاً هادئاً.\n\nجلس رجل عجوز على مقعد خشبي، يراقب ضوء الشمس يرقص على الأوراق. تذكر صيف طفولته، عندما كانت الأيام تبدو بلا نهاية وكل صوت يحمل وعداً. مر كلب وهو يهز ذيله، فابتسم الرجل.\n\nركض الطفل إليه وبيده أزهار سقطت من الشجر، ووضعها على المقعد. جلسا يستمعان معاً. أحياناً تكون اللحظات الصغيرة هي التي نحملها أطول."
+  }
+]
