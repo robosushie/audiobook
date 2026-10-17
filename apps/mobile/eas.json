@@ -6,15 +6,18 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "pnpm": "10.12.1"
     },
     "preview": {
       "distribution": "internal",
+      "pnpm": "10.12.1",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "pnpm": "10.12.1",
       "android": {
         "buildType": "apk"
       }

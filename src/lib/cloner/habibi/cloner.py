@@ -21,6 +21,7 @@ from src.constants.cloner import (
 from src.constants.language import language_to_iso
 from src.lib.cloner.assets import get_cloner_asset_paths
 from src.lib.cloner.base import VoiceCloner
+from src.lib.cloner.f5_batches import use_serial_f5_batches
 from src.lib.cloner.torchaudio_patch import patch_torchaudio_load
 from src.lib.error import CLONE_SYNTHESIS_FAILED
 from src.lib.schemas.cloner import CloneRequest, CloneResult
@@ -139,6 +140,7 @@ def _load_models() -> tuple[object, object]:
 
 def _infer(ref_path: str, ref_text: str, gen_text: str, model: object, vocoder: object) -> tuple[np.ndarray, int]:
     dialect_id = _dialect_id()
+    use_serial_f5_batches("habibi_tts.infer.utils_infer", "f5_tts.infer.utils_infer")
     try:
         from habibi_tts.infer.utils_infer import infer_process as habibi_infer
 

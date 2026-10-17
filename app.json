@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "f629a4ad-450c-4422-85c8-0f0cdd876102"
+      }
+    },
+    "android": {
+      "package": "com.audiobookorg.audiobook"
+    }
+  }
+}

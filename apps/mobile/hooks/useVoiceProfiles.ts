@@ -5,6 +5,8 @@ import type { VoiceProfileRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
 import * as React from 'react';
 
+const STATUS_POLL_MS = 8000;
+
 export function useVoiceProfiles() {
   const { getToken } = useAuth();
   const getTokenRef = React.useRef(getToken);
@@ -15,14 +17,18 @@ export function useVoiceProfiles() {
   const [error, setError] = React.useState<string | null>(null);
 
   const load = React.useCallback(async (silent = false) => {
-    if (!silent) setIsLoading(true);
-    setError(null);
+    if (!silent) {
+      setIsLoading(true);
+      setError(null);
+    }
     try {
       const token = await getTokenRef.current();
       if (!token) throw new Error('Not signed in');
       setVoices(await fetchVoiceProfiles(token));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load voices');
+      if (!silent) {
+        setError(err instanceof Error ? err.message : 'Failed to load voices');
+      }
     } finally {
       if (!silent) setIsLoading(false);
     }
@@ -31,6 +37,18 @@ export function useVoiceProfiles() {
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  const hasPending = voices.some(
+    (voice) => voice.status === 'queued' || voice.status === 'processing' || voice.status === 'uploaded',
+  );
+
+  React.useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(() => {
+      void load(true);
+    }, STATUS_POLL_MS);
+    return () => clearInterval(timer);
+  }, [hasPending, load]);
 
   useUserEventSubscription((message) => {
     if (message.type === 'voice.created' || message.type === 'voice.updated') {

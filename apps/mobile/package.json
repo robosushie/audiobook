@@ -2,12 +2,14 @@
   "name": "mobile",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.12.1",
   "scripts": {
     "dev": "expo start -c",
     "android": "expo start -c --android",
     "ios": "expo start -c --ios",
     "web": "expo start -c --web",
-    "clean": "rm -rf .expo node_modules"
+    "clean": "rm -rf .expo node_modules",
+    "eas-build-pre-install": "npm install --global pnpm@10.12.1"
   },
   "dependencies": {
     "@clerk/expo": "^3.2.7",

@@ -1,7 +1,4 @@
-import {
-  CreateAudiobookDock,
-  createAudiobookScrollPadding,
-} from '@/components/book/create-audiobook-modal';
+import { CreateAudiobookDock } from '@/components/book/create-audiobook-modal';
 import { BookCover } from '@/components/home/book-cover';
 import { ScreenHeader } from '@/components/layout/screen-header';
 import { LoadingState } from '@/components/ui/app-loader';
@@ -20,7 +17,7 @@ export default function BookDetailScreen() {
   const bookId = typeof id === 'string' ? id : id?.[0];
 
   const { book, content, isLoading, error } = useBookDetail(bookId);
-  const [dockExpanded, setDockExpanded] = React.useState(false);
+  const [dockHeight, setDockHeight] = React.useState(insets.bottom + 148);
 
   const genreLabel = book?.genre?.replace(/_/g, ' ');
 
@@ -30,7 +27,7 @@ export default function BookDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: insets.top + 12,
-          paddingBottom: createAudiobookScrollPadding(insets.bottom, dockExpanded),
+          paddingBottom: dockHeight + 12,
           paddingHorizontal: 20,
         }}>
         <ScreenHeader title="Book" onBack={() => router.back()} />
@@ -101,11 +98,7 @@ export default function BookDetailScreen() {
       </ScrollView>
 
       {book ? (
-        <CreateAudiobookDock
-          book={book}
-          expanded={dockExpanded}
-          onExpandedChange={setDockExpanded}
-        />
+        <CreateAudiobookDock book={book} onHeightChange={setDockHeight} />
       ) : null}
     </View>
   );

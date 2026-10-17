@@ -37,13 +37,27 @@ function initials(name: string | null | undefined, email: string | null | undefi
   return "AD";
 }
 
-export function Sidebar() {
+type SidebarProps = {
+  open: boolean;
+  onNavigate: () => void;
+};
+
+export function Sidebar({ open, onNavigate }: SidebarProps) {
   const { user } = useUser();
   const displayName = user?.fullName ?? user?.firstName ?? "Admin";
   const role = (user?.publicMetadata?.role as string | undefined) ?? "admin";
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside
+      id="admin-sidebar"
+      aria-hidden={!open}
+      inert={!open ? true : undefined}
+      className={cn(
+        "fixed top-14 bottom-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-border bg-sidebar transition-transform duration-200 ease-out",
+        "lg:static lg:top-auto lg:bottom-auto lg:z-auto lg:h-full",
+        open ? "translate-x-0" : "-translate-x-full lg:hidden",
+      )}
+    >
       <div className="border-b border-border px-5 py-6">
         <p className="font-display text-2xl font-semibold tracking-wide text-foreground">
           {APP_NAME}
@@ -53,11 +67,12 @@ export function Sidebar() {
         </p>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-3 py-4">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",

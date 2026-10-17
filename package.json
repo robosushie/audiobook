@@ -7,6 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
+    "eas-build-pre-install": "npm install --global pnpm@10.12.1",
     "dev": "concurrently -n admin,api -c cyan,magenta --kill-others-on-fail \"pnpm run app:admin\" \"pnpm run service:api\"",
     "infra:up": "python scripts/run.py infra:up",
     "deploy:stack": "python scripts/run.py deploy:stack",

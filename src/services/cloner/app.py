@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, File, Form, HTTPException, UploadFile, status
@@ -13,7 +14,7 @@ from src.enums.language import Language
 from src.lib.cloner.assets import ensure_cloner_assets_downloaded
 from src.lib.cloner.factory import clone_speech, resolve_cloner_type
 from src.lib.fastapi.routes.health import router as health_router
-from src.lib.schemas.cloner import CloneRequest
+from src.lib.schemas.cloner import CloneRequest, CloneResult
 from src.lib.schemas.fastapi import Middleware
 from src.lib.schemas.fastapi import Server as FastAPIServer
 
@@ -24,6 +25,11 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+# One synthesis at a time. The API retries after an hour, and the first thread
+# keeps running after that client gives up. A second IndicF5 pass on the same
+# 6GB GPU stalls both of them.
+_CLONE_LOCK = threading.Lock()
 
 _server = FastAPIServer(
     title="Audiobook Cloner",
@@ -74,6 +80,17 @@ def list_cloners() -> dict[str, object]:
     }
 
 
+def _clone_one(request: CloneRequest, cloner_type: ClonerType | None) -> CloneResult:
+    """Run one clone, waiting if another synthesis still holds the GPU."""
+    if _CLONE_LOCK.locked():
+        logger.info(
+            "clone waiting language=%s; another synthesis is still running",
+            request.language.value,
+        )
+    with _CLONE_LOCK:
+        return clone_speech(request, cloner_type=cloner_type)
+
+
 @router.post("/clone")
 async def clone_voice(
     reference_audio: UploadFile = File(..., description="Reference clip (WAV/MP3, ~5–20s)"),
@@ -94,17 +111,14 @@ async def clone_voice(
         backend.value,
         len(source_text),
     )
+    request = CloneRequest(
+        reference_audio=audio_bytes,
+        reference_text=reference_text.strip(),
+        source_text=source_text.strip(),
+        language=language,
+    )
     try:
-        result = await asyncio.to_thread(
-            clone_speech,
-            CloneRequest(
-                reference_audio=audio_bytes,
-                reference_text=reference_text.strip(),
-                source_text=source_text.strip(),
-                language=language,
-            ),
-            cloner_type=cloner_type,
-        )
+        result = await asyncio.to_thread(_clone_one, request, cloner_type)
     except Exception as exc:
         logger.exception("clone failed language=%s backend=%s", language.value, backend.value)
         raise HTTPException(
