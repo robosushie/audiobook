@@ -1,4 +1,4 @@
-# Merged by deploy:stack when nvidia-smi succeeds. The base file has no GPU reservation.
+# Merged by deploy:cloner when nvidia-smi succeeds. The base file has no GPU reservation.
 services:
   cloner:
     gpus:

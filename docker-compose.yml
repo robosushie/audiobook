@@ -2,8 +2,9 @@
 # Published: API :8000, MinIO console on localhost :9001.
 # Postgres, Redis, and the MinIO S3 API are bound to 127.0.0.1 so host
 # `service:api` can use them; they are not reachable off the machine.
-# Preprocess and cloner have no published ports.
-# `docker compose up -d` starts only data services. `deploy:stack` adds --profile stack.
+# Preprocess has no published port. The cloner publishes :8002 so another
+# machine can call it. `docker compose up -d` starts only data services.
+# `deploy:app` adds the API and preprocess. `deploy:cloner` starts the cloner.
 
 services:
   postgres:
@@ -101,7 +102,7 @@ services:
       S3_SECRET_KEY: minioadmin
       S3_REGION: us-east-1
       PREPROCESS_BASE_URL: http://preprocess:8003
-      CLONER_BASE_URL: http://cloner:8002
+      CLONER_BASE_URL: ${CLONER_API_ENDPOINT:-http://cloner:8002}
     depends_on:
       postgres:
         condition: service_healthy
@@ -135,12 +136,14 @@ services:
       - internal
 
   cloner:
-    profiles: ["stack"]
+    profiles: ["cloner"]
     image: audiobook-cloner
     build:
       context: .
       dockerfile: src/services/cloner/Dockerfile
     container_name: audiobook-cloner
+    ports:
+      - "8002:8002"
     env_file:
       - .env
     environment:

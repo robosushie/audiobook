@@ -10,7 +10,9 @@ Usage (via pnpm at repo root):
     pnpm run service:cloner    # Stateless cloner HTTP API :8002
     pnpm run service:preprocess  # Stateless voice preprocess API :8003
     pnpm run infra:up          # Postgres + Redis + MinIO (localhost only)
-    pnpm run deploy:stack      # build and run the full backend (GPU cloner if present)
+    pnpm run deploy:app        # Postgres, Redis, MinIO, API, and preprocess
+    pnpm run deploy:cloner     # cloner only (GPU when one is present)
+    pnpm run deploy:stack      # deploy:app then deploy:cloner
     python scripts/bootstrap/run.py
 
 Usage (via python — mobile / env injection):
@@ -272,14 +274,17 @@ def _gpu_available() -> bool:
     return result.returncode == 0
 
 
-def cmd_deploy_stack(_args: list[str]) -> None:
-    """Build and start the full backend. The cloner gets a GPU only when one is present."""
+def _compose_files(*, gpu: bool) -> list[str]:
+    """Return the docker compose file arguments."""
     compose = ["docker", "compose", "-f", "docker-compose.yml"]
-    if _gpu_available():
-        print("GPU detected; starting the cloner with GPU access")
+    if gpu:
         compose.extend(["-f", "docker-compose.gpu.yml"])
-    else:
-        print("No GPU detected; starting the cloner on CPU")
+    return compose
+
+
+def cmd_deploy_app(_args: list[str]) -> None:
+    """Build and start Postgres, Redis, MinIO, the API, and preprocess."""
+    compose = _compose_files(gpu=False)
     run(
         [*compose, "--profile", "stack", "build"],
         extra_env={"COMPOSE_PARALLEL_LIMIT": "1"},
@@ -287,6 +292,28 @@ def cmd_deploy_stack(_args: list[str]) -> None:
     run([*compose, "--profile", "stack", "up", "-d"])
     print("API            http://127.0.0.1:8000")
     print("MinIO console  http://127.0.0.1:9001")
+
+
+def cmd_deploy_cloner(_args: list[str]) -> None:
+    """Build and start only the cloner. It uses the GPU when one is present."""
+    gpu = _gpu_available()
+    if gpu:
+        print("GPU detected; starting the cloner with GPU access")
+    else:
+        print("No GPU detected; starting the cloner on CPU")
+    compose = _compose_files(gpu=gpu)
+    run(
+        [*compose, "--profile", "cloner", "build", "cloner"],
+        extra_env={"COMPOSE_PARALLEL_LIMIT": "1"},
+    )
+    run([*compose, "--profile", "cloner", "up", "-d", "cloner"])
+    print("Cloner         http://127.0.0.1:8002")
+
+
+def cmd_deploy_stack(_args: list[str]) -> None:
+    """Build and start the app stack, then the cloner."""
+    cmd_deploy_app(_args)
+    cmd_deploy_cloner(_args)
 
 
 def cmd_service_cloner(args: list[str]) -> None:
@@ -337,6 +364,8 @@ COMMANDS: dict[str, object] = {
     "app:admin": cmd_app_admin,
     "bootstrap": cmd_bootstrap,
     "infra:up": cmd_infra_up,
+    "deploy:app": cmd_deploy_app,
+    "deploy:cloner": cmd_deploy_cloner,
     "deploy:stack": cmd_deploy_stack,
     "service:api": cmd_service_api,
     "service:cloner": cmd_service_cloner,

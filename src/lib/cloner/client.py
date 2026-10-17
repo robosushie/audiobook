@@ -19,7 +19,14 @@ _CLONE_TIMEOUT_SECONDS = 3600.0
 
 
 def cloner_base_url() -> str:
-    """Return the cloner service base URL."""
+    """Return the cloner service base URL.
+
+    ``CLONER_API_ENDPOINT`` wins when it is set. Otherwise use the local
+    Docker cloner (``CLONER_BASE_URL``, or ``http://127.0.0.1:8002``).
+    """
+    configured = os.environ.get("CLONER_API_ENDPOINT", "").strip()
+    if configured:
+        return configured.rstrip("/")
     return os.environ.get("CLONER_BASE_URL", _DEFAULT_BASE_URL).rstrip("/")
 
 
