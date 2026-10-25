@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Stateless cloner API (port 8002). Build from repository root:
 #   docker build -f src/services/cloner/Dockerfile -t audiobook-cloner .
 #
@@ -44,10 +45,14 @@ RUN apt-get update \
 COPY pyproject.toml poetry.lock ./
 
 # One wheel at a time, with retries. Parallel CUDA downloads drop the connection.
-RUN poetry config installer.max-workers 1 \
+# The mounts keep Torch and the CUDA wheels when this layer is rebuilt.
+# PIP_NO_CACHE_DIR stays set on the image and is unset only for this install.
+RUN --mount=type=cache,id=audiobook-cloner-pip,target=/root/.cache/pip \
+    --mount=type=cache,id=audiobook-cloner-poetry,target=/root/.cache/pypoetry \
+    poetry config installer.max-workers 1 \
     && poetry config requests.max-retries 10 \
     && attempt=1 \
-    && while ! poetry install --only main --no-root; do \
+    && while ! env -u PIP_NO_CACHE_DIR poetry install --only main --no-root; do \
          if [ "$attempt" -ge 5 ]; then \
            echo "poetry install failed after ${attempt} attempts" >&2; \
            exit 1; \
@@ -56,7 +61,7 @@ RUN poetry config installer.max-workers 1 \
          attempt=$((attempt + 1)); \
          sleep 20; \
        done \
-    && pip install --retries 10 --timeout 300 chatterbox-tts --no-deps
+    && env -u PIP_NO_CACHE_DIR pip install --retries 10 --timeout 300 chatterbox-tts --no-deps
 
 COPY src ./src
 

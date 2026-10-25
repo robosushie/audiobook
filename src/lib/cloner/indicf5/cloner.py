@@ -31,14 +31,25 @@ _DEVICE: str | None = None
 # f5_tts uses float16 once CUDA compute capability reaches this major version.
 _CUDA_FP16_MIN_MAJOR = 7
 
+# IndicF5 is an F5-TTS Base (v0) fine-tune. f5-tts 1.1 defaults are v1
+# (RoPE on every head, padding masked). Those defaults ignore the text and
+# the voice follows the reference clip's language.
 _INDICF5_MODEL_CFG = {
     "dim": 1024,
     "depth": 22,
     "heads": 16,
     "ff_mult": 2,
     "text_dim": 512,
+    "text_mask_padding": False,
     "conv_layers": 4,
+    "pe_attn_head": 1,
 }
+
+
+def _raw_indic_chars(text_list: list[str], polyphone: bool = True) -> list[list[str]]:
+    """Tokenize the way IndicF5 was trained: one character, no pinyin."""
+    del polyphone
+    return [list(text) for text in text_list]
 
 
 def _device() -> str:
@@ -165,6 +176,11 @@ def _load_models() -> tuple[object, object]:
     # does not strip, and that helper now requires ckpt_path. Build the CFM
     # shell here and load the weights with the IndicF5 normalizer.
     vocab_char_map, vocab_size = get_tokenizer(str(assets.indicf5_vocab), "custom")
+    logger.info(
+        "IndicF5 DiT v0 text_mask_padding=%s pe_attn_head=%s",
+        _INDICF5_MODEL_CFG["text_mask_padding"],
+        _INDICF5_MODEL_CFG["pe_attn_head"],
+    )
     model = CFM(
         transformer=DiT(
             **_INDICF5_MODEL_CFG,
@@ -206,15 +222,24 @@ class IndicF5Cloner(VoiceCloner):
             try:
                 model, vocoder = _load_models()
                 use_serial_f5_batches("f5_tts.infer.utils_infer")
-                wav, sr, _ = infer_process(
-                    ref_audio=str(ref_path),
-                    ref_text=request.reference_text,
-                    gen_text=request.source_text,
-                    model_obj=model,
-                    vocoder=vocoder,
-                    mel_spec_type=INDICF5_MEL_SPEC_TYPE,
-                    device=_device(),
-                )
+                import f5_tts.infer.utils_infer as utils_infer
+
+                # infer_batch_process looks this name up on the module. Swap it
+                # only for this call so Habibi keeps the stock pinyin function.
+                original_chars = utils_infer.convert_char_to_pinyin
+                utils_infer.convert_char_to_pinyin = _raw_indic_chars
+                try:
+                    wav, sr, _ = infer_process(
+                        ref_audio=str(ref_path),
+                        ref_text=request.reference_text,
+                        gen_text=request.source_text,
+                        model_obj=model,
+                        vocoder=vocoder,
+                        mel_spec_type=INDICF5_MEL_SPEC_TYPE,
+                        device=_device(),
+                    )
+                finally:
+                    utils_infer.convert_char_to_pinyin = original_chars
             except Exception as exc:
                 raise RuntimeError(
                     CLONE_SYNTHESIS_FAILED.format(
