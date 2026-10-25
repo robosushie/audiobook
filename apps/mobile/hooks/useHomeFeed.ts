@@ -1,7 +1,9 @@
-import { fetchMyAudiobooks } from '@/api/audiobooks';
+import { fetchVisibleAudiobooks } from '@/api/audiobooks';
 import { fetchBooks } from '@/api/books';
 import { fetchMyPlaybacks } from '@/api/playbacks';
 import { useUserEventSubscription } from '@/contexts/user-events';
+import { isCatalogueLanguage } from '@/lib/constants/languages';
+import { sortLibraryAudiobooks } from '@/lib/library/filters';
 import type { AudiobookRow, BookRow, PlaybackRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
 import * as React from 'react';
@@ -69,14 +71,14 @@ export function useHomeFeed(): HomeFeedState {
 
         const [playbacks, audiobooks, catalogue, trending] = await Promise.all([
           fetchMyPlaybacks(token, 1),
-          fetchMyAudiobooks(token, { page: 1, pageSize: 8, status: 'completed' }),
+          fetchVisibleAudiobooks(token),
           fetchBooks(token, { page: 1, pageSize: 8 }),
           fetchBooks(token, { page: 1, pageSize: 8, trending: true }),
         ]);
 
         if (cancelled) return;
 
-        const books = catalogue.items;
+        const books = catalogue.items.filter((book) => isCatalogueLanguage(book.language));
         const nonTrending = books.filter((book) => !book.is_trending);
         const recommended = nonTrending.slice(0, 5);
         const recommendedIds = new Set(recommended.map((book) => book.id));
@@ -91,9 +93,9 @@ export function useHomeFeed(): HomeFeedState {
         }
 
         setContinueItem(playbacks[0] ?? null);
-        setMyAudiobooks(audiobooks.items.slice(0, 4));
+        setMyAudiobooks(sortLibraryAudiobooks(audiobooks.items));
         setRecommendedBooks(recommended.slice(0, 5));
-        setTrendingBooks(trending.items);
+        setTrendingBooks(trending.items.filter((book) => isCatalogueLanguage(book.language)));
         hasLoadedRef.current = true;
       } catch (err) {
         if (!cancelled) {
@@ -120,12 +122,8 @@ export function useHomeFeed(): HomeFeedState {
         try {
           const token = await getTokenRef.current();
           if (!token) return;
-          const audiobooks = await fetchMyAudiobooks(token, {
-            page: 1,
-            pageSize: 8,
-            status: 'completed',
-          });
-          setMyAudiobooks(audiobooks.items.slice(0, 4));
+          const audiobooks = await fetchVisibleAudiobooks(token);
+          setMyAudiobooks(sortLibraryAudiobooks(audiobooks.items));
         } catch {
           // The next tick retries. A missed poll should not replace the feed error.
         }

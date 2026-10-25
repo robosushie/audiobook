@@ -192,6 +192,8 @@ async def _claim_audiobook_job(
                 audiobook,
                 book_title=book.title,
                 book_cover_url=book.cover_url,
+                book_author=book.author,
+                book_language=book.language,
                 event_type="audiobook.updated",
             )
             logger.info(
@@ -223,6 +225,8 @@ async def _persist_audiobook_result(
     status: AudiobookStatus,
     book_title: str | None,
     book_cover_url: str | None,
+    book_author: object | None = None,
+    book_language: object | None = None,
     content_url: str | None = None,
     duration: float | None = None,
 ) -> Audiobook:
@@ -249,6 +253,8 @@ async def _persist_audiobook_result(
             audiobook,
             book_title=book_title,
             book_cover_url=book_cover_url,
+            book_author=book_author,
+            book_language=book_language,
             event_type="audiobook.updated",
         )
         logger.info(
@@ -298,6 +304,8 @@ async def run_audiobook_generation_job(
         status=AudiobookStatus.COMPLETED,
         book_title=work.book_title,
         book_cover_url=work.book_cover_url,
+        book_author=work.book.author,
+        book_language=work.book.language,
         content_url=content_url,
         duration=duration,
     )
@@ -314,13 +322,19 @@ async def mark_audiobook_failed(audiobook_id: UUID) -> None:
             return
         audiobook.status = AudiobookStatus.FAILED
         await session.flush()
-        book_result = await session.execute(select(Book.title, Book.cover_url).where(Book.id == audiobook.book_id))
+        book_result = await session.execute(
+            select(Book.title, Book.cover_url, Book.author, Book.language).where(Book.id == audiobook.book_id),
+        )
         book_row = book_result.first()
         book_title = book_row[0] if book_row else None
         book_cover_url = book_row[1] if book_row else None
+        book_author = book_row[2] if book_row else None
+        book_language = book_row[3] if book_row else None
         await publish_audiobook_row(
             audiobook,
             book_title=book_title,
             book_cover_url=book_cover_url,
+            book_author=book_author,
+            book_language=book_language,
             event_type="audiobook.updated",
         )

@@ -1,15 +1,9 @@
 import { Text } from '@/components/ui/text';
 import { BOOK_GENRES } from '@/lib/constants/genres';
+import { REFERENCE_LANGUAGES } from '@/lib/constants/languages';
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-
-const CATALOGUE_LANGUAGES = [
-  { value: 'english', label: 'English' },
-  { value: 'hindi', label: 'Hindi' },
-  { value: 'arabic', label: 'Arabic' },
-  { value: 'odia', label: 'Odia' },
-] as const;
 
 type CatalogueFiltersProps = {
   genre: string | null;
@@ -34,7 +28,7 @@ export function CatalogueFilters({
       />
       <FilterRow
         label="Language"
-        options={CATALOGUE_LANGUAGES.map((item) => ({ value: item.value, label: item.label }))}
+        options={REFERENCE_LANGUAGES.map((item) => ({ value: item.value, label: item.label }))}
         selected={language}
         onChange={onLanguageChange}
       />

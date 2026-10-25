@@ -1,9 +1,12 @@
 """Server-sent event payloads for the mobile app."""
 
+from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
+
+from src.lib.schemas.common import UserName
 
 UserEventType = Literal[
     "voice.created",
@@ -44,4 +47,7 @@ class AudiobookSSEPayload(BaseModel):
     duration: float | None = None
     book_title: str | None = None
     book_cover_url: str | None = None
-    playback_progress: float = 0.0
+    book_author: UserName | None = None
+    book_language: str | None = None
+    completed_at: datetime | None = None
+    playback_progress: float | None = None

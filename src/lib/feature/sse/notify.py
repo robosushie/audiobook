@@ -5,8 +5,10 @@ from uuid import UUID
 from sqlalchemy import select
 
 from src.enums.language import Language
+from src.lib.feature.audiobook.cache import upsert_recent_audiobook
 from src.lib.feature.sse.publish import publish_user_event
 from src.lib.module.jobs.db import job_session
+from src.lib.schemas.common import UserName
 from src.lib.schemas.sse import AudiobookSSEPayload, UserEventType, VoiceSSEPayload
 from src.models.content.audiobook import Audiobook
 from src.models.content.book import Book
@@ -46,14 +48,26 @@ async def publish_voice_row(
     )
 
 
+def _author_payload(value: object | None) -> UserName | None:
+    if value is None:
+        return None
+    if isinstance(value, UserName):
+        return value
+    return UserName.model_validate(value)
+
+
 async def publish_audiobook_row(
     audiobook: Audiobook,
     *,
     book_title: str | None = None,
     book_cover_url: str | None = None,
-    playback_progress: float = 0.0,
+    book_author: object | None = None,
+    book_language: object | None = None,
+    playback_progress: float | None = None,
     event_type: UserEventType,
 ) -> None:
+    language = _language_slug(book_language) or None
+    author = _author_payload(book_author)
     payload = AudiobookSSEPayload(
         id=audiobook.id,
         user_id=audiobook.user_id,
@@ -64,12 +78,38 @@ async def publish_audiobook_row(
         duration=audiobook.duration,
         book_title=book_title,
         book_cover_url=book_cover_url,
-        playback_progress=min(max(playback_progress, 0.0), 1.0),
+        book_author=author,
+        book_language=language,
+        completed_at=audiobook.completed_at,
+        playback_progress=None if playback_progress is None else min(max(playback_progress, 0.0), 1.0),
     )
     await publish_user_event(
         audiobook.user_id,
         event_type,
-        payload.model_dump(mode="json"),
+        payload.model_dump(mode="json", exclude_none=True),
+    )
+    fields: dict[str, object] = {
+        "id": str(audiobook.id),
+        "user_id": str(audiobook.user_id),
+        "book_id": str(audiobook.book_id),
+        "voice_profile_id": str(audiobook.voice_profile_id),
+        "status": audiobook.status.value,
+        "content_url": audiobook.content_url,
+        "duration": audiobook.duration,
+        "completed_at": audiobook.completed_at.isoformat() if audiobook.completed_at else None,
+        "book_title": book_title,
+        "book_cover_url": book_cover_url,
+    }
+    if author is not None:
+        fields["book_author"] = author.model_dump()
+    if language is not None:
+        fields["book_language"] = language
+    if playback_progress is not None:
+        fields["playback_progress"] = min(max(playback_progress, 0.0), 1.0)
+    await upsert_recent_audiobook(
+        audiobook.user_id,
+        fields,
+        created=event_type == "audiobook.created",
     )
 
 
@@ -90,7 +130,14 @@ async def publish_voice_event(profile_id: UUID, event_type: UserEventType) -> No
 async def publish_audiobook_event(audiobook_id: UUID, event_type: UserEventType) -> None:
     async with job_session() as session:
         result = await session.execute(
-            select(Audiobook, Book.title, Book.cover_url, Playback.progress)
+            select(
+                Audiobook,
+                Book.title,
+                Book.cover_url,
+                Book.author,
+                Book.language,
+                Playback.progress,
+            )
             .outerjoin(Book, Audiobook.book_id == Book.id)
             .outerjoin(
                 Playback,
@@ -101,12 +148,19 @@ async def publish_audiobook_event(audiobook_id: UUID, event_type: UserEventType)
         row = result.first()
         if row is None:
             return
-        audiobook, book_title, book_cover_url, progress = row[0], row[1], row[2], row[3]
+        audiobook = row[0]
+        book_title = row[1]
+        book_cover_url = row[2]
+        book_author = row[3]
+        book_language = row[4]
+        progress = row[5]
         playback_progress = float(progress) if progress is not None else 0.0
     await publish_audiobook_row(
         audiobook,
         book_title=book_title,
         book_cover_url=book_cover_url,
+        book_author=book_author,
+        book_language=book_language,
         playback_progress=playback_progress,
         event_type=event_type,
     )

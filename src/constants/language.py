@@ -15,9 +15,10 @@ class LanguageSettings:
     cloner: ClonerType
 
 
+# IndicF5 remains implemented, but Hindi synthesis uses Chatterbox.
+# Malayalam, Tamil, and Odia stay mapped here and are hidden in the apps.
 _INDICF5_LANGUAGES: frozenset[Language] = frozenset(
     {
-        Language.HINDI,
         Language.MALAYALAM,
         Language.TAMIL,
         Language.ODIYA,
@@ -26,7 +27,7 @@ _INDICF5_LANGUAGES: frozenset[Language] = frozenset(
 
 LANGUAGE_SETTINGS: dict[Language, LanguageSettings] = {
     Language.ENGLISH: LanguageSettings(iso="en", iso639_3="eng", cloner=ClonerType.CHATTERBOX),
-    Language.HINDI: LanguageSettings(iso="hi", iso639_3="hin", cloner=ClonerType.INDICF5),
+    Language.HINDI: LanguageSettings(iso="hi", iso639_3="hin", cloner=ClonerType.CHATTERBOX),
     Language.MALAYALAM: LanguageSettings(iso="ml", iso639_3="mal", cloner=ClonerType.INDICF5),
     Language.TAMIL: LanguageSettings(iso="ta", iso639_3="tam", cloner=ClonerType.INDICF5),
     Language.ODIYA: LanguageSettings(iso="or", iso639_3="ori", cloner=ClonerType.INDICF5),

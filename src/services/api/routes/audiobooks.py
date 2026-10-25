@@ -16,6 +16,12 @@ from src.enums.media import AudiobookStatus
 from src.lib.auth.clerk import create_authorization
 from src.lib.cloner.cloner import create_queued_audiobook
 from src.lib.feature.audiobook.audio import AudiobookAudioNotFoundError, read_audiobook_audio_bytes
+from src.lib.feature.audiobook.cache import (
+    current_generation,
+    invalidate_recent_page,
+    read_recent_page,
+    store_recent_page,
+)
 from src.lib.feature.sse.notify import publish_audiobook_row
 from src.lib.db import get_session
 from src.lib.feature.user.current import resolve_current_user
@@ -116,6 +122,18 @@ async def list_audiobooks(
 ) -> Page[AudiobookWithBookRead]:
     """List the signed-in user's audiobooks with book details."""
     user = await resolve_current_user(request, session)
+    observed_generation: str | None = None
+    if page == 1 and pipeline_status is None:
+        cached = await read_recent_page(user.id, page_size)
+        if cached is not None:
+            raw_items, cached_total = cached
+            try:
+                items = [AudiobookWithBookRead.model_validate(item) for item in raw_items]
+            except Exception:
+                items = []
+            else:
+                return Page(items=items, page=page, page_size=page_size, total=cached_total)
+        observed_generation = await current_generation(user.id)
     filters = [Audiobook.user_id == user.id]
     if pipeline_status is not None:
         filters.append(Audiobook.status == pipeline_status)
@@ -156,6 +174,13 @@ async def list_audiobooks(
                 book_language=book_language,
                 playback_progress=playback_progress,
             )
+        )
+    if observed_generation is not None:
+        await store_recent_page(
+            user.id,
+            observed_generation,
+            [item.model_dump(mode="json") for item in out],
+            total,
         )
     return Page(items=out, page=page, page_size=page_size, total=total)
 
@@ -336,12 +361,16 @@ async def generate_audiobook_endpoint(
             audiobook_id=str(audiobook.id),
             cloner_type=body.cloner_type.value if body.cloner_type else None,
         )
-        book_result = await session.execute(select(Book.title, Book.cover_url).where(Book.id == audiobook.book_id))
+        book_result = await session.execute(
+            select(Book.title, Book.cover_url, Book.author, Book.language).where(Book.id == audiobook.book_id),
+        )
         book_row = book_result.first()
         await publish_audiobook_row(
             audiobook,
             book_title=book_row[0] if book_row else None,
             book_cover_url=book_row[1] if book_row else None,
+            book_author=book_row[2] if book_row else None,
+            book_language=book_row[3] if book_row else None,
             event_type="audiobook.created",
         )
     except Exception as e:
@@ -368,6 +397,7 @@ async def update_audiobook(
         setattr(audiobook, key, value)
     await session.flush()
     await session.refresh(audiobook)
+    await invalidate_recent_page(audiobook.user_id)
     return AudiobookRead.model_validate(audiobook)
 
 
@@ -382,4 +412,5 @@ async def delete_audiobook(
     if not audiobook:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Audiobook not found")
     await session.delete(audiobook)
+    await invalidate_recent_page(audiobook.user_id)
     return None

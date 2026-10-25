@@ -12,8 +12,9 @@
 #     -v audiobook-cloner-models:/data/cloner-models \
 #     audiobook-cloner
 #
-# Optional env: HF_TOKEN (gated IndicF5), HABIBI_DIALECT=UNK, CLONER_MODEL_DIR
-# First start downloads Chatterbox + IndicF5 + Habibi Unified + Vocos into the volume.
+# Optional env: HF_TOKEN, HABIBI_DIALECT=UNK, CLONER_MODEL_DIR
+# First start downloads Chatterbox English, Chatterbox Hindi, Habibi Unified, and Vocos.
+# IndicF5 weights are not downloaded.
 
 FROM python:3.12-slim-bookworm AS runtime
 
@@ -28,7 +29,9 @@ ENV PYTHONUNBUFFERED=1 \
     POETRY_NO_INTERACTION=1 \
     POETRY_REQUESTS_TIMEOUT=300 \
     PYTHONPATH=/app \
-    CLONER_MODEL_DIR=/data/cloner-models
+    CLONER_MODEL_DIR=/data/cloner-models \
+    HF_HOME=/data/cloner-models/huggingface \
+    HF_HUB_CACHE=/data/cloner-models/huggingface/hub
 
 WORKDIR /app
 

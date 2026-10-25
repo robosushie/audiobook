@@ -33,7 +33,7 @@ _CLONE_LOCK = threading.Lock()
 
 _server = FastAPIServer(
     title="Audiobook Cloner",
-    description="Stateless voice cloning: English Chatterbox, Hindi IndicF5, Arabic Habibi",
+    description="Stateless voice cloning: English and Hindi Chatterbox, Arabic Habibi",
     version="1.0.0",
     base_path="/api",
     enable_docs=True,
@@ -49,7 +49,7 @@ _middleware = Middleware(
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Download cloner weights once, then serve clone requests."""
-    logger.info("Ensuring cloner assets (Chatterbox, IndicF5, Habibi Unified) are present")
+    logger.info("Ensuring cloner assets (Chatterbox English, Chatterbox Hindi, Habibi Unified) are present")
     ensure_cloner_assets_downloaded()
     logger.info("Cloner service ready")
     yield
@@ -74,7 +74,7 @@ def list_cloners() -> dict[str, object]:
     """Return language → backend defaults."""
     return {
         "english": ClonerType.CHATTERBOX.value,
-        "hindi": ClonerType.INDICF5.value,
+        "hindi": ClonerType.CHATTERBOX.value,
         "arabic": ClonerType.HABIBITTS.value,
         "indic": ClonerType.INDICF5.value,
     }

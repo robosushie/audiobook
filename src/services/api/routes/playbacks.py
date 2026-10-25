@@ -12,6 +12,7 @@ from src.lib.feature.user.current import resolve_current_user
 from src.lib.schemas.common import UserName
 from src.models.content.audiobook import Audiobook
 from src.models.content.book import Book
+from src.lib.feature.audiobook.cache import patch_recent_progress
 from src.models.player.playback import Playback, PlaybackRead, PlaybackUpdate
 from src.models.user.user import User
 
@@ -117,6 +118,7 @@ async def upsert_my_playback(
         playback.last_played_at = body.last_played_at or now
 
     await session.refresh(playback)
+    await patch_recent_progress(user.id, audiobook_id, playback.progress)
     return PlaybackWithDetailsRead(
         **PlaybackRead.model_validate(playback).model_dump(),
         book_id=book.id,

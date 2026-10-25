@@ -1,4 +1,5 @@
 import { fetchBooks } from '@/api/books';
+import { isCatalogueLanguage } from '@/lib/constants/languages';
 import type { BookRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
 import * as React from 'react';
@@ -43,7 +44,10 @@ export function useCatalogueBooks(filters: CatalogueFilters = {}) {
         language: language || undefined,
       });
       if (id !== requestId.current) return;
-      setBooks(data.items);
+      const visible = language
+        ? data.items
+        : data.items.filter((book) => isCatalogueLanguage(book.language));
+      setBooks(visible);
       setTotal(data.total);
     } catch (err) {
       if (id !== requestId.current) return;

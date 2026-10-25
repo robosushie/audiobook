@@ -11,6 +11,10 @@ from pathlib import Path
 from dotenv import find_dotenv, load_dotenv
 from src.constants.cloner import (
     CHATTERBOX_FILES,
+    CHATTERBOX_HINDI_REPO,
+    CHATTERBOX_HINDI_T3,
+    CHATTERBOX_MTL_OPTIONAL_FILES,
+    CHATTERBOX_MTL_SHARED_FILES,
     CHATTERBOX_REPO,
     HABIBI_CKPT_FILENAME,
     HABIBI_REPO,
@@ -40,6 +44,7 @@ class ClonerAssetPaths:
     habibi_ckpt: Path
     habibi_vocab: Path
     chatterbox_dir: Path
+    chatterbox_mtl_dir: Path
     vocos_dir: Path
 
     @property
@@ -186,6 +191,63 @@ def _download_chatterbox_assets(root: Path) -> Path:
     return chatterbox_dir
 
 
+def _download_chatterbox_mtl_assets(root: Path) -> Path:
+    """Download the official Hindi Chatterbox pack plus shared multilingual files."""
+    from huggingface_hub import hf_hub_download
+
+    mtl_dir = root / "chatterbox-mtl"
+    mtl_dir.mkdir(parents=True, exist_ok=True)
+
+    for filename in CHATTERBOX_MTL_SHARED_FILES:
+        dest = mtl_dir / filename
+        if dest.exists():
+            continue
+        logger.info("Downloading Chatterbox multilingual %s to %s", filename, dest)
+        try:
+            source = Path(
+                hf_hub_download(
+                    repo_id=CHATTERBOX_REPO,
+                    filename=filename,
+                ),
+            )
+        except Exception:
+            if filename in CHATTERBOX_MTL_OPTIONAL_FILES:
+                logger.warning("Optional Chatterbox multilingual file missing: %s", filename)
+                continue
+            raise
+        _materialize(source, dest)
+
+    t3_target = mtl_dir / CHATTERBOX_HINDI_T3
+    if not t3_target.exists():
+        logger.info("Downloading Chatterbox Hindi %s to %s", CHATTERBOX_HINDI_T3, t3_target)
+        t3_source = Path(
+            hf_hub_download(
+                repo_id=CHATTERBOX_HINDI_REPO,
+                filename=CHATTERBOX_HINDI_T3,
+            ),
+        )
+        _materialize(t3_source, t3_target)
+
+    s3gen_target = mtl_dir / "s3gen.pt"
+    if not s3gen_target.exists():
+        logger.info("Downloading Chatterbox Hindi s3gen_v3.pt to %s", s3gen_target)
+        s3gen_source = Path(
+            hf_hub_download(
+                repo_id=CHATTERBOX_HINDI_REPO,
+                filename="s3gen_v3.pt",
+            ),
+        )
+        _materialize(s3gen_source, s3gen_target)
+
+    return mtl_dir
+
+
+def _indicf5_paths(root: Path) -> tuple[Path, Path]:
+    """Return IndicF5 locations without downloading weights."""
+    indicf5_dir = root / "indicf5"
+    return indicf5_dir / INDICF5_CKPT_FILENAME, indicf5_dir / "vocab.txt"
+
+
 def ensure_cloner_assets_downloaded() -> ClonerAssetPaths:
     """Download missing cloner weights to disk. Does not load models into memory."""
     global _paths
@@ -196,12 +258,18 @@ def ensure_cloner_assets_downloaded() -> ClonerAssetPaths:
     root.mkdir(parents=True, exist_ok=True)
     logger.info("Cloner model root: %s", root)
 
+    cache = root / "huggingface"
+    os.environ.setdefault("HF_HOME", str(cache))
+    os.environ.setdefault("HF_HUB_CACHE", str(cache / "hub"))
+
     vocos_dir = root / "vocos"
     _download_vocos(vocos_dir)
 
-    indicf5_ckpt, indicf5_vocab = _download_indicf5_assets(root)
+    indicf5_ckpt, indicf5_vocab = _indicf5_paths(root)
+    logger.info("IndicF5 weight download skipped")
     habibi_ckpt, habibi_vocab = _download_habibi_assets(root)
     chatterbox_dir = _download_chatterbox_assets(root)
+    chatterbox_mtl_dir = _download_chatterbox_mtl_assets(root)
 
     _paths = ClonerAssetPaths(
         root=root,
@@ -210,6 +278,7 @@ def ensure_cloner_assets_downloaded() -> ClonerAssetPaths:
         habibi_ckpt=habibi_ckpt,
         habibi_vocab=habibi_vocab,
         chatterbox_dir=chatterbox_dir,
+        chatterbox_mtl_dir=chatterbox_mtl_dir,
         vocos_dir=vocos_dir,
     )
     return _paths

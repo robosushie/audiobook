@@ -1,11 +1,10 @@
-import { fetchMyAudiobooks } from '@/api/audiobooks';
+import { AUDIOBOOK_PAGE_SIZE, fetchMyAudiobooks, fetchVisibleAudiobooks } from '@/api/audiobooks';
 import { useUserEventSubscription } from '@/contexts/user-events';
 import type { AudiobookSSEPayload } from '@/lib/sse/types';
 import type { AudiobookRow } from '@/types/api';
 import { useAuth } from '@clerk/expo';
 import * as React from 'react';
 
-const PAGE_SIZE = 8;
 const STATUS_POLL_MS = 8000;
 
 export function useLibraryAudiobooks(status?: string) {
@@ -32,14 +31,21 @@ export function useLibraryAudiobooks(status?: string) {
       try {
         const token = await getTokenRef.current();
         if (!token) throw new Error('Not signed in');
-        const data = await fetchMyAudiobooks(token, {
-          page: nextPage,
-          pageSize: PAGE_SIZE,
-          status,
-        });
+        const data =
+          !status && nextPage === 1
+            ? await fetchVisibleAudiobooks(token)
+            : await fetchMyAudiobooks(token, {
+                page: nextPage,
+                pageSize: AUDIOBOOK_PAGE_SIZE,
+                status,
+              });
         if (id !== requestId.current) return;
         setAudiobooks((prev) => {
-          if (!silent) return append ? [...prev, ...data.items] : data.items;
+          if (!silent) {
+            if (!append) return data.items;
+            const seen = new Set(prev.map((item) => item.id));
+            return [...prev, ...data.items.filter((item) => !seen.has(item.id))];
+          }
           const incoming = new Map(data.items.map((item) => [item.id, item]));
           const merged = prev.map((item) => incoming.get(item.id) ?? item);
           const seen = new Set(prev.map((item) => item.id));
@@ -66,27 +72,30 @@ export function useLibraryAudiobooks(status?: string) {
     void loadPage(1, false);
   }, [loadPage]);
 
-  const hasPending = audiobooks.some(
-    (item) => item.status === 'queued' || item.status === 'processing',
-  );
-
   React.useEffect(() => {
-    if (!hasPending) return;
     const timer = setInterval(() => {
       void loadPage(1, false, true);
     }, STATUS_POLL_MS);
     return () => clearInterval(timer);
-  }, [hasPending, loadPage]);
+  }, [loadPage]);
 
   useUserEventSubscription((message) => {
     if (message.type === 'audiobook.created' || message.type === 'audiobook.updated') {
       const row = audiobookFromSSE(message.data as AudiobookSSEPayload);
       setAudiobooks((prev) => {
         const index = prev.findIndex((item) => item.id === row.id);
-        if (index === -1) return [row, ...prev];
+        if (index === -1) {
+          if (status && row.status !== status) return prev;
+          return [{ ...row, playback_progress: row.playback_progress ?? 0 }, ...prev];
+        }
+        const current = prev[index];
         const next = [...prev];
-        next[index] = { ...next[index], ...row };
-        return next;
+        next[index] = {
+          ...current,
+          ...row,
+          playback_progress: row.playback_progress ?? current.playback_progress,
+        };
+        return status ? next.filter((item) => item.status === status) : next;
       });
     }
   });

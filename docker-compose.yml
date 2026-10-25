@@ -148,6 +148,8 @@ services:
       - .env
     environment:
       CLONER_MODEL_DIR: /data/cloner-models
+      HF_HOME: /data/cloner-models/huggingface
+      HF_HUB_CACHE: /data/cloner-models/huggingface/hub
     volumes:
       - audiobook-cloner-models:/data/cloner-models
     networks:

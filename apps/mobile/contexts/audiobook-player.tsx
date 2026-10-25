@@ -101,6 +101,15 @@ export function AudiobookPlayerProvider({ children }: { children: React.ReactNod
       }
 
       if (activeAudiobook?.id === item.id && !status.playing && cachedUriRef.current) {
+        const atEnd =
+          status.duration > 1 && status.currentTime >= status.duration - 0.35;
+        if (atEnd) {
+          player.replace(cachedUriRef.current);
+          await player.seekTo(0);
+          lastSavedProgressRef.current = 0;
+          setSavedProgress((prev) => ({ ...prev, [item.id]: 0 }));
+          await persistProgress(item.id, 0);
+        }
         player.play();
         return;
       }
@@ -117,9 +126,10 @@ export function AudiobookPlayerProvider({ children }: { children: React.ReactNod
         const localUri = await ensureAudiobookAudioFile(token, item.id);
         cachedUriRef.current = localUri;
 
-        const startProgress = clampProgress(
+        const resumeProgress = clampProgress(
           savedProgress[item.id] ?? item.playback_progress ?? 0,
         );
+        const startProgress = resumeProgress >= 0.985 ? 0 : resumeProgress;
 
         player.replace(localUri);
         lastSavedProgressRef.current = startProgress;
@@ -143,7 +153,7 @@ export function AudiobookPlayerProvider({ children }: { children: React.ReactNod
         setIsLoadingAudio(false);
       }
     },
-    [activeAudiobook?.id, persistProgress, player, savedProgress, status.duration, status.playing],
+    [activeAudiobook?.id, persistProgress, player, savedProgress, status.currentTime, status.duration, status.playing],
   );
 
   const dismissAudiobook = React.useCallback(async () => {

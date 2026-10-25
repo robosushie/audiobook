@@ -17,6 +17,19 @@ CHATTERBOX_FILES = (
     "tokenizer.json",
     "conds.pt",
 )
+# Hindi uses the official single-language v3 pack. Shared voice-encoder and
+# tokenizer files still come from ResembleAI/chatterbox. s3gen_v3.pt is stored
+# as s3gen.pt because ChatterboxMultilingualTTS.from_local loads that name.
+CHATTERBOX_HINDI_REPO = "ResembleAI/Chatterbox-Multilingual-hi"
+CHATTERBOX_HINDI_T3 = "t3_hi.safetensors"
+CHATTERBOX_MTL_SHARED_FILES = (
+    "ve.pt",
+    "conds.pt",
+    "grapheme_mtl_merged_expanded_v1.json",
+    "Cangjie5_TC.json",
+)
+CHATTERBOX_MTL_OPTIONAL_FILES = frozenset({"Cangjie5_TC.json"})
+CHATTERBOX_HINDI_LANGUAGE_ID = "hi"
 CHATTERBOX_MAX_CHUNK_CHARS = 280
 
 HABIBI_REPO = "SWivid/Habibi-TTS"
